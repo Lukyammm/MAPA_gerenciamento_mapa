@@ -3,6 +3,7 @@
  ***************************************/
 const SHEET_CADASTRO = 'Cadastro';
 const SHEET_BASE = 'Base de Dados';
+const SHEET_MAPA = 'MapaDados';
 
 function doGet(e) {
   return HtmlService.createTemplateFromFile('index')
@@ -11,6 +12,62 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+/***************************************
+ * MAPA MENTAL (persistência em Sheets)
+ ***************************************/
+function ensureMapaSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sheet = ss.getSheetByName(SHEET_MAPA);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_MAPA);
+    sheet.getRange('A1').setValue(JSON.stringify(defaultMapData()));
+  }
+  return sheet;
+}
+
+function defaultMapData() {
+  const rootId = Utilities.getUuid();
+  return {
+    rootId: rootId,
+    nodes: [
+      {
+        id: rootId,
+        parentId: null,
+        title: 'Hospital',
+        description: 'Mapa mental das salas e equipes',
+        tags: ['dashboard', 'sala'],
+        collapsed: false,
+        position: { x: 0, y: 0 },
+        color: '#60a5fa',
+      },
+    ],
+  };
+}
+
+function getMap() {
+  const sheet = ensureMapaSheet();
+  const value = sheet.getRange('A1').getValue();
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && parsed.nodes) return parsed;
+    return defaultMapData();
+  } catch (err) {
+    return defaultMapData();
+  }
+}
+
+function setMap(mapObj) {
+  if (!mapObj || !Array.isArray(mapObj.nodes)) {
+    throw new Error('Mapa inválido recebido.');
+  }
+  const sheet = ensureMapaSheet();
+  sheet.getRange('A1').setValue(JSON.stringify(mapObj));
+  return { status: 'ok', savedAt: new Date() };
+}
+
+/***************************************
+ * FUNÇÕES LEGADAS (registros de salas)
+ ***************************************/
 /**
  * Lê as salas na aba "Cadastro", coluna A, a partir da linha 2.
  */
