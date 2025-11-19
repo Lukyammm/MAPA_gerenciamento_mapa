@@ -1,1078 +1,836 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
   <head>
-    <base target="_top">
     <meta charset="UTF-8" />
-    <title>Mapa Dinâmico das Salas</title>
-
+    <title>Mapa Mental Dinâmico</title>
+    <base target="_top" />
     <style>
       :root {
-        /* Core palette */
-        --primary-color: #3b82f6;
-        --secondary-color: #10b981;
-        --success-color: #22c55e;
-        --warning-color: #f59e0b;
-        --danger-color: #ef4444;
-        --primary-dark: #1d4ed8;
-        --danger-dark: #991b1b;
-
-        /* Neutrals */
-        --dark-color: #1f2937;
-        --light-color: #f3f4f6;
-        --text-color: var(--dark-color);
-        --muted-color: #6b7280;
-        --surface-color: #ffffff;
-        --bg-color: #f9fafb;
-        --border-color: #e5e7eb;
-        --shadow-color: rgba(15, 23, 42, 0.12);
+        --bg: #0f172a;
+        --panel: #0b1224;
+        --surface: #111a33;
+        --border: #1f2a44;
+        --muted: #8ca0c5;
+        --text: #e5edff;
+        --primary: #60a5fa;
+        --primary-strong: #1d4ed8;
+        --accent: #a855f7;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.36);
       }
 
       * {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
       }
 
       body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 10% 10%, #1a2642 0, #0b1020 50%),
+          linear-gradient(180deg, #0b1224 0%, #0b0f1b 100%);
+        color: var(--text);
+        min-height: 100vh;
+        overflow: hidden;
       }
 
       .app {
+        display: flex;
+        flex-direction: column;
         min-height: 100vh;
-        padding: 16px 24px;
+      }
+
+      header {
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 12px;
+        padding: 16px 20px 8px;
       }
 
-      .top-label {
-        font-size: 0.76rem;
-        color: var(--muted-color);
+      .badge {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, #1d4ed8, #9333ea);
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        letter-spacing: 0.16em;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+        color: #f8fbff;
+        box-shadow: var(--shadow);
       }
 
-      .top-label::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: linear-gradient(
-          135deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
+      h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
       }
 
-      .board {
-        margin-top: 4px;
-        flex: 1;
-        background: radial-gradient(circle at top left, #e5f0ff 0, #f9fafb 40%, #ffffff 100%);
-        border-radius: 18px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-        padding: 18px 22px;
-        display: grid;
-        grid-template-columns: 220px minmax(0, 1.35fr) minmax(0, 1.1fr);
-        gap: 18px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      /* "Linhas" de ligação estilo mapa mental */
-      .board::before {
-        content: "";
-        position: absolute;
-        left: 215px;
-        top: 40px;
-        bottom: 40px;
-        width: 1px;
-        background: linear-gradient(
-          to bottom,
-          transparent 0,
-          rgba(148, 163, 184, 0.7) 15%,
-          rgba(148, 163, 184, 0.7) 85%,
-          transparent 100%
-        );
-        pointer-events: none;
-      }
-
-      .board::after {
-        content: "";
-        position: absolute;
-        left: 52%;
-        top: 40px;
-        bottom: 40px;
-        width: 1px;
-        background: linear-gradient(
-          to bottom,
-          transparent 0,
-          rgba(148, 163, 184, 0.4) 15%,
-          rgba(148, 163, 184, 0.4) 85%,
-          transparent 100%
-        );
-        pointer-events: none;
-      }
-
-      /* Coluna de salas (blocos como no Paint) */
-      .nodes-column {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        padding-right: 10px;
-        position: relative;
-        z-index: 1;
-      }
-
-      .nodes-title {
-        font-size: 0.82rem;
-        color: var(--muted-color);
-        margin-bottom: 2px;
-      }
-
-      .room-node {
-        background-color: #ffffff;
-        border-radius: 18px;
-        border: 2px solid rgba(148, 163, 184, 0.7);
-        padding: 18px 10px;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.95rem;
-        cursor: pointer;
-        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.03);
-        transition: all 0.18s ease-out;
-        position: relative;
-      }
-
-      .room-node::after {
-        content: "›";
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1rem;
-        color: rgba(148, 163, 184, 0.9);
-      }
-
-      .room-node:hover {
-        transform: translateX(3px);
-        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
-        border-color: var(--primary-color);
-      }
-
-      .room-node.active {
-        border-color: var(--primary-color);
-        box-shadow: 0 6px 22px rgba(37, 99, 235, 0.28);
-        background: radial-gradient(
-          circle at top,
-          rgba(59, 130, 246, 0.18),
-          #ffffff
-        );
-        color: var(--primary-dark);
-      }
-
-      /* Balões (painéis) estilo mapa mental */
-      .bubble {
-        background-color: var(--surface-color);
-        border-radius: 18px;
-        border: 1px solid rgba(148, 163, 184, 0.5);
-        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.16);
-        padding: 14px 16px;
-        position: relative;
-        z-index: 1;
-        opacity: 0;
-        transform: scale(0.96) translateY(6px);
-        pointer-events: none;
-        transition: opacity 0.16s ease-out,
-          transform 0.16s ease-out;
-      }
-
-      .bubble.visible {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-        pointer-events: auto;
-      }
-
-      /* setinha vinda da coluna de salas */
-      .bubble-left-arrow::before {
-        content: "";
-        position: absolute;
-        left: -18px;
-        top: 30%;
-        border-width: 10px 18px 10px 0;
-        border-style: solid;
-        border-color: transparent rgba(148, 163, 184, 0.55) transparent
-          transparent;
-      }
-
-      .bubble-left-arrow::after {
-        content: "";
-        position: absolute;
-        left: -16px;
-        top: 30%;
-        border-width: 9px 16px 9px 0;
-        border-style: solid;
-        border-color: transparent #ffffff transparent transparent;
-      }
-
-      /* setinha vinda do balão central para o da direita */
-      .bubble-right-arrow::before {
-        content: "";
-        position: absolute;
-        left: -1px;
-        top: 40%;
-        width: 30px;
-        height: 1px;
-        background: rgba(148, 163, 184, 0.6);
-      }
-
-      .bubble-right-arrow::after {
-        content: "";
-        position: absolute;
-        left: 26px;
-        top: 40%;
-        border-width: 5px 0 5px 8px;
-        border-style: solid;
-        border-color: transparent transparent transparent
-          rgba(148, 163, 184, 0.6);
-      }
-
-      .bubble-header {
+      .toolbar {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 10px;
-        margin-bottom: 8px;
+        padding: 10px 20px 12px;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+          inset 0 1px 0 rgba(255, 255, 255, 0.03);
       }
 
-      .bubble-title {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .bubble-title h2 {
-        font-size: 0.95rem;
-        font-weight: 600;
-      }
-
-      .bubble-title span {
-        font-size: 0.78rem;
-        color: var(--muted-color);
-      }
-
-      /* Disquete salvar */
-      .save-wrapper {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .save-status-label {
-        font-size: 0.75rem;
-        color: var(--muted-color);
-      }
-
-      .save-button {
-        border: none;
-        padding: 4px;
-        border-radius: 999px;
+      .toolbar button,
+      .toolbar .chip,
+      .toolbar .status {
+        border: 1px solid var(--border);
+        background: linear-gradient(140deg, #111a33, #0c1328);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
         cursor: pointer;
-        background: transparent;
-        transition: all 0.16s ease-out;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-      }
-
-      .save-button svg {
-        width: 20px;
-        height: 20px;
-      }
-
-      .save-button.unsaved svg {
-        fill: var(--danger-color);
-      }
-
-      .save-button.saved svg {
-        fill: var(--success-color);
-      }
-
-      .save-button:hover:not(:disabled) {
-        transform: scale(1.05);
-      }
-
-      .save-button:disabled {
-        opacity: 0.6;
-        cursor: default;
-      }
-
-      /* Form dentro do balão central */
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px 12px;
-        margin-top: 4px;
-      }
-
-      .form-field {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-
-      .form-field label {
-        font-size: 0.78rem;
-        color: var(--muted-color);
-      }
-
-      .form-field input,
-      .form-field textarea {
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
-        padding: 7px 9px;
-        font-size: 0.82rem;
-        outline: none;
-        background-color: #ffffff;
-        transition: all 0.15s ease-out;
-      }
-
-      .form-field textarea {
-        resize: vertical;
-        min-height: 52px;
-      }
-
-      .form-field input:focus,
-      .form-field textarea:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
-      }
-
-      .form-footer {
-        margin-top: 6px;
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.75rem;
-        color: var(--muted-color);
-      }
-
-      /* Tabela de histórico */
-      .table-container {
-        margin-top: 10px;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        overflow: hidden;
-        background-color: #ffffff;
-        max-height: 260px;
-        overflow-y: auto;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.78rem;
-      }
-
-      thead {
-        background-color: var(--light-color);
-      }
-
-      th,
-      td {
-        padding: 5px 7px;
-        border-bottom: 1px solid var(--border-color);
-        text-align: left;
-      }
-
-      th {
-        color: var(--muted-color);
-        font-weight: 600;
-      }
-
-      tbody tr:nth-child(even) {
-        background-color: #fafafa;
-      }
-
-      tbody tr:hover {
-        background-color: #eef2ff;
-      }
-
-      .muted {
-        color: var(--muted-color);
-        font-size: 0.78rem;
-      }
-
-      /* Equipes à direita */
-      .equipes-list {
-        display: flex;
-        flex-direction: column;
         gap: 8px;
-        max-height: 330px;
-        overflow-y: auto;
+        transition: transform 0.1s ease, border-color 0.2s ease,
+          box-shadow 0.2s ease;
+        box-shadow: var(--shadow);
       }
 
-      .equipe-card {
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        padding: 7px 9px;
-        background: radial-gradient(
-          circle at top left,
-          rgba(16, 185, 129, 0.12),
-          #ffffff
-        );
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
+      .toolbar button:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 20px rgba(96, 165, 250, 0.25);
       }
 
-      .equipe-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+      .toolbar button:disabled {
+        opacity: 0.55;
+        cursor: default;
+        box-shadow: none;
       }
 
-      .equipe-header h3 {
-        font-size: 0.84rem;
-        font-weight: 600;
+      .toolbar .chip {
+        cursor: default;
+        box-shadow: none;
       }
 
-      .eye-icon {
-        width: 20px;
-        height: 20px;
-        border-radius: 999px;
-        border: 1px solid rgba(59, 130, 246, 0.5);
+      .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
         display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background-color: rgba(59, 130, 246, 0.07);
+        background: var(--success);
       }
 
-      .eye-icon svg {
-        width: 13px;
-        height: 13px;
-        fill: var(--primary-dark);
+      .status.unsaved .status-dot {
+        background: var(--danger);
       }
 
-      .equipe-body {
-        font-size: 0.76rem;
-        color: var(--muted-color);
+      .viewport {
+        position: relative;
+        flex: 1;
+        margin: 14px 14px 20px;
+        border-radius: 18px;
+        overflow: hidden;
+        background: radial-gradient(circle at 40% 20%, rgba(96, 165, 250, 0.12),
+            transparent 40%),
+          radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.1), transparent
+              35%),
+          linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(9, 10, 16, 0.95)
+              100%);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: var(--shadow);
       }
 
-      .equipe-body ul {
-        margin-top: 2px;
-        padding-left: 14px;
-      }
-
-      .equipe-body li {
-        margin-bottom: 2px;
-      }
-
-      /* Loading leve em cima dos balões */
-      .panel-loading {
+      .grid {
         position: absolute;
         inset: 0;
-        border-radius: inherit;
-        background: radial-gradient(
-          circle at top,
-          rgba(249, 250, 251, 0.96),
-          rgba(255, 255, 255, 0.98)
-        );
+        background-image: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          );
+        background-size: 48px 48px;
+        pointer-events: none;
+      }
+
+      .map-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        cursor: grab;
+      }
+
+      .map-inner {
+        position: absolute;
+        transform-origin: 0 0;
+      }
+
+      svg.edges {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .node {
+        position: absolute;
+        min-width: 170px;
+        background: linear-gradient(145deg, #122142, #0e1530);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        cursor: grab;
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          border-color 0.2s ease;
+      }
+
+      .node:focus-within,
+      .node.selected {
+        border-color: var(--primary);
+        box-shadow: 0 16px 30px rgba(96, 165, 250, 0.35);
+        transform: translateY(-1px);
+      }
+
+      .node-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        outline: none;
+      }
+
+      .node-meta {
+        font-size: 0.82rem;
+        color: var(--muted);
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        color: var(--muted-color);
+        gap: 8px;
       }
 
-      .spinner {
-        width: 16px;
-        height: 16px;
+      .node-tags {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        padding: 3px 7px;
         border-radius: 999px;
-        border: 2px solid rgba(148, 163, 184, 0.7);
-        border-top-color: var(--primary-color);
-        animation: spin 0.6s linear infinite;
-        margin-right: 8px;
+        font-size: 0.75rem;
+        background: rgba(96, 165, 250, 0.12);
+        border: 1px solid rgba(96, 165, 250, 0.3);
       }
 
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
+      .node-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
 
-      /* Toast */
+      .chip-button {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 3px 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: opacity 0.15s ease, border-color 0.2s ease;
+      }
+
+      .chip-button:hover {
+        border-color: var(--primary);
+        opacity: 1;
+      }
+
+      .collapsed-hint {
+        font-size: 0.75rem;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 6px 8px;
+      }
+
+      .floating-card {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(11, 17, 30, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 6px;
+        min-width: 260px;
+      }
+
+      .floating-card h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .floating-card small {
+        color: var(--muted);
+      }
+
+      .key-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+      }
+
       .toast {
         position: fixed;
         bottom: 18px;
         right: 18px;
-        background-color: var(--dark-color);
-        color: #ffffff;
-        padding: 9px 14px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.5);
+        padding: 11px 14px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.95);
+        color: #f8fbff;
+        box-shadow: var(--shadow);
         opacity: 0;
-        transform: translateY(8px);
-        pointer-events: none;
-        transition: all 0.18s ease-out;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        transform: translateY(10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        font-size: 0.9rem;
       }
 
-      .toast.visible {
+      .toast.show {
         opacity: 1;
         transform: translateY(0);
-        pointer-events: auto;
       }
 
-      .toast.success {
-        background-color: var(--secondary-color);
+      .sync-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.15);
       }
 
-      .toast.error {
-        background-color: var(--danger-dark);
+      .sync-dot.pending {
+        background: var(--danger);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);
       }
 
-      @media (max-width: 1000px) {
-        .board {
-          grid-template-columns: 190px minmax(0, 1.2fr);
-          grid-template-rows: auto auto;
-          grid-template-areas:
-            "nodes main"
-            "nodes right";
+      @media (max-width: 860px) {
+        .toolbar {
+          flex-wrap: wrap;
         }
-
-        .nodes-column {
-          grid-area: nodes;
-        }
-
-        #bubbleSala {
-          grid-area: main;
-        }
-
-        #bubbleEquipe {
-          grid-area: right;
-        }
-
-        .board::after {
-          display: none;
-        }
-      }
-
-      @media (max-width: 750px) {
-        .board {
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-rows: auto auto auto;
-          grid-template-areas:
-            "nodes"
-            "main"
-            "right";
-        }
-
-        .board::before,
-        .board::after {
-          display: none;
+        .node {
+          min-width: 150px;
         }
       }
     </style>
   </head>
-
   <body>
     <div class="app">
-      <div class="top-label">Mapa dinâmico de salas • uso hospitalar</div>
-
-      <div class="board">
-        <!-- Coluna de salas -->
-        <div class="nodes-column">
-          <div class="nodes-title">
-            Clique em uma sala para abrir os detalhes
-          </div>
-          <div id="roomList">
-            <!-- nós das salas via JS -->
+      <header>
+        <span class="badge">Mapa Mental</span>
+        <div>
+          <h1>Salas e Equipes (Sheets)</h1>
+          <div style="color: var(--muted); font-size: 0.9rem;">
+            Arraste, edite, conecte e sincronize com a planilha em tempo real.
           </div>
         </div>
+      </header>
 
-        <!-- Balão central: lista + formulário -->
-        <section
-          id="bubbleSala"
-          class="bubble bubble-left-arrow"
-        >
-          <div class="panel-loading" id="salaLoading" style="display:none;">
-            <div class="spinner"></div>
-            <span>Carregando dados da sala...</span>
-          </div>
-
-          <div class="bubble-header">
-            <div class="bubble-title">
-              <h2 id="salaTitle">Sala não selecionada</h2>
-              <span id="salaSubtitle">
-                Escolha uma sala à esquerda para visualizar e registrar informações.
-              </span>
-            </div>
-            <div class="save-wrapper">
-              <span class="save-status-label">Salvar</span>
-              <button
-                id="saveButton"
-                class="save-button saved"
-                title="Clique para salvar os dados desta inserção"
-                disabled
-              >
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h12V9.5L13.5 5H6zm3 1v5h6V6H9zm0 8v3h6v-3H9z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <form id="registroForm">
-            <div class="form-grid">
-              <div class="form-field">
-                <label for="nome">Nome</label>
-                <input
-                  type="text"
-                  id="nome"
-                  name="nome"
-                  autocomplete="off"
-                  placeholder="Nome do profissional / paciente"
-                />
-              </div>
-
-              <div class="form-field">
-                <label for="especialidade">Especialidade</label>
-                <input
-                  type="text"
-                  id="especialidade"
-                  name="especialidade"
-                  autocomplete="off"
-                  placeholder="Ex.: Cirurgia, Ortopedia..."
-                />
-              </div>
-
-              <div class="form-field" style="grid-column:1/-1;">
-                <label for="procedimento">Procedimento</label>
-                <textarea
-                  id="procedimento"
-                  name="procedimento"
-                  placeholder="Descreva rapidamente o procedimento ou motivo."
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="form-footer">
-              <span>
-                <span
-                  style="
-                    display:inline-block;width:8px;height:8px;border-radius:999px;
-                    background:var(--danger-color);margin-right:4px;
-                  "
-                ></span>
-                Disquete vermelho = alterações não salvas
-              </span>
-              <span>
-                <span
-                  style="
-                    display:inline-block;width:8px;height:8px;border-radius:999px;
-                    background:var(--success-color);margin-right:4px;
-                  "
-                ></span>
-                Disquete verde = salvo na planilha
-              </span>
-            </div>
-          </form>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Hora</th>
-                  <th>Nome</th>
-                  <th>Especialidade</th>
-                  <th>Procedimento</th>
-                </tr>
-              </thead>
-              <tbody id="tabelaBody">
-                <tr>
-                  <td colspan="5" class="muted">
-                    Nenhuma sala selecionada.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <!-- Balão direito: equipes -->
-        <section
-          id="bubbleEquipe"
-          class="bubble bubble-right-arrow"
-        >
-          <div class="panel-loading" id="equipeLoading" style="display:none;">
-            <div class="spinner"></div>
-            <span>Organizando equipes desta sala...</span>
-          </div>
-
-          <div class="bubble-header">
-            <div class="bubble-title">
-              <h2>Equipes médicas</h2>
-              <span>
-                Agrupadas por especialidade, a partir dos registros da sala.
-              </span>
-            </div>
-            <div class="eye-icon" title="Resumo visual das equipes">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div id="equipesList" class="equipes-list">
-            <div class="muted">
-              Selecione uma sala para ver o resumo das equipes médicas daquela
-              sala.
-            </div>
-          </div>
-        </section>
+      <div class="toolbar">
+        <button id="btnAddChild">➕ Filho (Enter)</button>
+        <button id="btnAddSibling">➕ Irmão (Shift+Enter)</button>
+        <button id="btnDelete">🗑️ Remover (Del)</button>
+        <button id="btnOrganize">🧭 Auto-organizar</button>
+        <button id="btnCollapse">⤵️ Expandir/Colapsar</button>
+        <button id="btnUndo">↩️ Undo</button>
+        <button id="btnRedo">↪️ Redo</button>
+        <button id="btnSave">💾 Salvar (Ctrl/Cmd+S)</button>
+        <span class="status" id="syncStatus">
+          <span class="status-dot"></span> <strong>Sincronizado</strong>
+        </span>
       </div>
 
-      <div id="toast" class="toast">
-        <span id="toastMessage"></span>
+      <div class="viewport" id="viewport">
+        <div class="grid"></div>
+        <div class="map-wrapper" id="mapWrapper">
+          <svg class="edges" id="edgeLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="map-inner" id="mapInner"></div>
+        </div>
+        <div class="floating-card">
+          <h3>Atalhos</h3>
+          <div class="key-row"><span>Enter</span><span>Novo filho</span></div>
+          <div class="key-row"><span>Shift + Enter</span><span>Novo irmão</span></div>
+          <div class="key-row"><span>Delete</span><span>Remover nó</span></div>
+          <div class="key-row"><span>Ctrl/Cmd + S</span><span>Salvar</span></div>
+          <div class="key-row"><span>Ctrl/Cmd + Z / Y</span><span>Undo/Redo</span></div>
+          <small>Arraste o fundo para mover o mapa. Scroll para zoom.</small>
+        </div>
       </div>
     </div>
 
+    <div class="toast" id="toast"></div>
+
     <script>
-      let currentSala = null;
-      let registrosAtual = [];
-      let formDirty = false;
+      const mapInner = document.getElementById("mapInner");
+      const edgeLayer = document.getElementById("edgeLayer");
+      const viewport = document.getElementById("viewport");
+      const mapWrapper = document.getElementById("mapWrapper");
+      const toast = document.getElementById("toast");
+      const syncStatus = document.getElementById("syncStatus");
 
-      const roomListEl = document.getElementById("roomList");
-      const bubbleSala = document.getElementById("bubbleSala");
-      const bubbleEquipe = document.getElementById("bubbleEquipe");
+      const btnAddChild = document.getElementById("btnAddChild");
+      const btnAddSibling = document.getElementById("btnAddSibling");
+      const btnDelete = document.getElementById("btnDelete");
+      const btnOrganize = document.getElementById("btnOrganize");
+      const btnCollapse = document.getElementById("btnCollapse");
+      const btnUndo = document.getElementById("btnUndo");
+      const btnRedo = document.getElementById("btnRedo");
+      const btnSave = document.getElementById("btnSave");
 
-      const salaTitleEl = document.getElementById("salaTitle");
-      const salaSubtitleEl = document.getElementById("salaSubtitle");
-      const tabelaBodyEl = document.getElementById("tabelaBody");
-      const equipesListEl = document.getElementById("equipesList");
+      let mapState = { nodes: [], rootId: null };
+      let selectedId = null;
+      let isDraggingNode = false;
+      let dragOffset = { x: 0, y: 0 };
+      let panState = { x: 200, y: 120, scale: 1 };
+      let isPanning = false;
+      let panStart = { x: 0, y: 0 };
+      const undoStack = [];
+      const redoStack = [];
+      let savePending = false;
+      let saveTimer = null;
 
-      const salaLoadingEl = document.getElementById("salaLoading");
-      const equipeLoadingEl = document.getElementById("equipeLoading");
-
-      const registroForm = document.getElementById("registroForm");
-      const saveButton = document.getElementById("saveButton");
-
-      const toastEl = document.getElementById("toast");
-      const toastMessageEl = document.getElementById("toastMessage");
-
-      window.addEventListener("load", () => {
-        google.script.run
-          .withSuccessHandler(renderSalas)
-          .withFailureHandler(onError)
-          .getSalas();
-
-        registroForm.addEventListener("input", () => {
-          markFormUnsaved();
-        });
-
-        saveButton.addEventListener("click", (e) => {
-          e.preventDefault();
-          handleSave();
-        });
-
-        // Começa com os balões "desligados" visualmente
-        bubbleSala.classList.remove("visible");
-        bubbleEquipe.classList.remove("visible");
-      });
-
-      /* ==== Salas (nós do mapa) ==== */
-      function renderSalas(salas) {
-        roomListEl.innerHTML = "";
-
-        if (!salas || salas.length === 0) {
-          const div = document.createElement("div");
-          div.className = "muted";
-          div.textContent =
-            'Nenhuma sala cadastrada na aba "Cadastro".';
-          roomListEl.appendChild(div);
-          return;
-        }
-
-        salas.forEach((sala) => {
-          const node = document.createElement("div");
-          node.className = "room-node";
-          node.textContent = sala;
-          node.dataset.sala = sala;
-
-          node.addEventListener("click", () => selectSala(sala, node));
-          roomListEl.appendChild(node);
-        });
+      function defaultMap() {
+        const rootId = crypto.randomUUID();
+        return {
+          rootId,
+          nodes: [
+            {
+              id: rootId,
+              parentId: null,
+              title: "Hospital",
+              description: "Mapa mental das salas e equipes",
+              tags: ["dashboard", "sala"],
+              collapsed: false,
+              position: { x: 0, y: 0 },
+              color: "#60a5fa",
+            },
+            {
+              id: crypto.randomUUID(),
+              parentId: rootId,
+              title: "Sala 1",
+              description: "Procedimentos gerais",
+              tags: ["geral"],
+              collapsed: false,
+              position: { x: 240, y: -80 },
+              color: "#a855f7",
+            },
+            {
+              id: crypto.randomUUID(),
+              parentId: rootId,
+              title: "Sala 2",
+              description: "Urgência",
+              tags: ["urgência"],
+              collapsed: false,
+              position: { x: 240, y: 120 },
+              color: "#22c55e",
+            },
+          ],
+        };
       }
 
-      function selectSala(sala, element) {
-        if (currentSala === sala) return;
-
-        currentSala = sala;
-        registrosAtual = [];
-        clearForm();
-        markFormSaved();
-
-        // visual: nodo ativo
-        document
-          .querySelectorAll(".room-node")
-          .forEach((el) => el.classList.remove("active"));
-        element.classList.add("active");
-
-        // mostra balões (tipo mapa mental abrindo quando clica na sala)
-        bubbleSala.classList.add("visible");
-        bubbleEquipe.classList.add("visible");
-
-        salaTitleEl.textContent = sala;
-        salaSubtitleEl.textContent =
-          "Sala selecionada. Registre abaixo as equipes e procedimentos. Cada salvamento gera uma linha na aba \"Base de Dados\".";
-
-        salaLoadingEl.style.display = "flex";
-        equipeLoadingEl.style.display = "flex";
-
-        google.script.run
-          .withSuccessHandler((registros) => {
-            registrosAtual = registros || [];
-            renderTabela();
-            renderEquipes();
-            salaLoadingEl.style.display = "none";
-            equipeLoadingEl.style.display = "none";
-          })
-          .withFailureHandler((err) => {
-            salaLoadingEl.style.display = "none";
-            equipeLoadingEl.style.display = "none";
-            onError(err);
-          })
-          .getRegistrosPorSala(sala);
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2200);
       }
 
-      /* ==== Tabela de histórico ==== */
-      function renderTabela() {
-        tabelaBodyEl.innerHTML = "";
-
-        if (!registrosAtual || registrosAtual.length === 0) {
-          const tr = document.createElement("tr");
-          const td = document.createElement("td");
-          td.colSpan = 5;
-          td.className = "muted";
-          td.textContent =
-            "Nenhum registro para esta sala ainda. Preencha o formulário acima e clique no disquete para salvar.";
-          tr.appendChild(td);
-          tabelaBodyEl.appendChild(tr);
-          return;
+      function setStatus(unsaved) {
+        savePending = unsaved;
+        const dot = syncStatus.querySelector(".status-dot");
+        const label = syncStatus.querySelector("strong");
+        if (unsaved) {
+          dot.classList.add("unsaved");
+          label.textContent = "Alterações pendentes";
+        } else {
+          dot.classList.remove("unsaved");
+          label.textContent = "Sincronizado";
         }
-
-        registrosAtual
-          .slice()
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-          .forEach((reg) => {
-            const tr = document.createElement("tr");
-
-            const tdData = document.createElement("td");
-            tdData.textContent = reg.data || "-";
-
-            const tdHora = document.createElement("td");
-            tdHora.textContent = reg.hora || "-";
-
-            const tdNome = document.createElement("td");
-            tdNome.textContent = reg.nome || "-";
-
-            const tdEsp = document.createElement("td");
-            tdEsp.textContent = reg.especialidade || "-";
-
-            const tdProc = document.createElement("td");
-            tdProc.textContent = reg.procedimento || "-";
-
-            tr.appendChild(tdData);
-            tr.appendChild(tdHora);
-            tr.appendChild(tdNome);
-            tr.appendChild(tdEsp);
-            tr.appendChild(tdProc);
-
-            tabelaBodyEl.appendChild(tr);
-          });
       }
 
-      /* ==== Equipes por especialidade ==== */
-      function renderEquipes() {
-        equipesListEl.innerHTML = "";
+      function pushHistory() {
+        undoStack.push(JSON.stringify(mapState));
+        if (undoStack.length > 40) undoStack.shift();
+        redoStack.length = 0;
+      }
 
-        if (!currentSala) {
-          const div = document.createElement("div");
-          div.className = "muted";
-          div.textContent =
-            "Selecione uma sala para ver o resumo das equipes.";
-          equipesListEl.appendChild(div);
-          return;
+      function loadFromServer() {
+        if (typeof google !== "undefined" && google.script) {
+          google.script.run
+            .withSuccessHandler((data) => {
+              mapState = data && data.nodes ? data : defaultMap();
+              render();
+            })
+            .withFailureHandler(() => {
+              mapState = defaultMap();
+              render();
+            })
+            .getMap();
+        } else {
+          mapState = defaultMap();
+          render();
+        }
+      }
+
+      function saveToServer(debounced = true) {
+        setStatus(true);
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          if (typeof google !== "undefined" && google.script) {
+            google.script.run
+              .withSuccessHandler(() => {
+                setStatus(false);
+                showToast("Mapa salvo na planilha");
+              })
+              .withFailureHandler(() => showToast("Falha ao salvar"))
+              .setMap(mapState);
+          } else {
+            setStatus(false);
+          }
+        }, debounced ? 600 : 0);
+      }
+
+      function render() {
+        mapInner.innerHTML = "";
+        edgeLayer.innerHTML = "";
+        const visible = new Set();
+
+        const mapById = new Map(mapState.nodes.map((n) => [n.id, n]));
+
+        function isVisible(node) {
+          let current = node;
+          while (current) {
+            if (current.collapsed && current.id !== node.id) return false;
+            current = mapById.get(current.parentId);
+          }
+          return true;
         }
 
-        if (!registrosAtual || registrosAtual.length === 0) {
-          const div = document.createElement("div");
-          div.className = "muted";
-          div.textContent =
-            "Ainda não há registros para esta sala. Ao salvar novos registros, as especialidades aparecerão aqui.";
-          equipesListEl.appendChild(div);
-          return;
-        }
+        mapState.nodes.forEach((node) => {
+          if (!isVisible(node)) return;
+          visible.add(node.id);
+          const el = document.createElement("div");
+          el.className = "node" + (node.id === selectedId ? " selected" : "");
+          el.style.left = `${node.position.x}px`;
+          el.style.top = `${node.position.y}px`;
+          el.style.borderColor = node.color || "var(--border)";
 
-        const mapa = new Map();
-        registrosAtual.forEach((reg) => {
-          const esp = (reg.especialidade || "Sem especialidade").trim();
-          if (!mapa.has(esp)) mapa.set(esp, []);
-          mapa.get(esp).push(reg);
-        });
-
-        Array.from(mapa.entries()).forEach(([esp, regs]) => {
-          const card = document.createElement("div");
-          card.className = "equipe-card";
-
-          const header = document.createElement("div");
-          header.className = "equipe-header";
-
-          const title = document.createElement("h3");
-          title.textContent = esp;
-
-          const body = document.createElement("div");
-          body.className = "equipe-body";
-
-          const eye = document.createElement("div");
-          eye.className = "eye-icon";
-          eye.innerHTML = `
-            <svg viewBox="0 0 24 24">
-              <path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
-            </svg>
-          `;
-
-          header.appendChild(title);
-          header.appendChild(eye);
-
-          const p = document.createElement("p");
-          p.textContent = `Equipe da especialidade: ${esp}`;
-
-          const ul = document.createElement("ul");
-          regs.forEach((r) => {
-            const li = document.createElement("li");
-            const nome = r.nome || "Sem nome";
-            const proc = r.procedimento || "";
-            li.textContent = proc ? `${nome} — ${proc}` : nome;
-            ul.appendChild(li);
+          const title = document.createElement("div");
+          title.className = "node-title";
+          title.contentEditable = "true";
+          title.textContent = node.title;
+          title.addEventListener("input", () => {
+            node.title = title.textContent.trim() || "(sem nome)";
+            setStatus(true);
+            saveToServer();
           });
 
-          body.appendChild(p);
-          body.appendChild(ul);
+          const meta = document.createElement("div");
+          meta.className = "node-meta";
+          meta.textContent = node.description || "Sem descrição";
+          meta.contentEditable = "true";
+          meta.addEventListener("input", () => {
+            node.description = meta.textContent.trim();
+            setStatus(true);
+            saveToServer();
+          });
 
-          card.appendChild(header);
-          card.appendChild(body);
+          const tags = document.createElement("div");
+          tags.className = "node-tags";
+          (node.tags || []).forEach((tag) => {
+            const t = document.createElement("span");
+            t.className = "tag";
+            t.textContent = tag;
+            tags.appendChild(t);
+          });
 
-          equipesListEl.appendChild(card);
+          const actions = document.createElement("div");
+          actions.className = "node-actions";
+          const toggle = document.createElement("button");
+          toggle.className = "chip-button";
+          toggle.textContent = node.collapsed ? "Expandir" : "Colapsar";
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            node.collapsed = !node.collapsed;
+            render();
+            saveToServer();
+          });
+          actions.appendChild(toggle);
+
+          if (node.collapsed) {
+            const hint = document.createElement("div");
+            hint.className = "collapsed-hint";
+            hint.textContent = "Filhos ocultos";
+            actions.appendChild(hint);
+          }
+
+          el.appendChild(title);
+          el.appendChild(meta);
+          el.appendChild(tags);
+          el.appendChild(actions);
+
+          el.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0) return;
+            isDraggingNode = true;
+            selectedId = node.id;
+            dragOffset = { x: e.clientX - node.position.x, y: e.clientY - node.position.y };
+            el.setPointerCapture(e.pointerId);
+          });
+
+          el.addEventListener("pointermove", (e) => {
+            if (!isDraggingNode || selectedId !== node.id) return;
+            const x = (e.clientX - dragOffset.x) / panState.scale;
+            const y = (e.clientY - dragOffset.y) / panState.scale;
+            node.position = { x, y };
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            drawEdges();
+            setStatus(true);
+          });
+
+          el.addEventListener("pointerup", (e) => {
+            if (isDraggingNode) {
+              el.releasePointerCapture(e.pointerId);
+              isDraggingNode = false;
+              saveToServer();
+            }
+          });
+
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedId = node.id;
+            render();
+          });
+
+          mapInner.appendChild(el);
         });
+
+        drawEdges();
       }
 
-      /* ==== Estado do formulário / salvar ==== */
-      function markFormUnsaved() {
-        formDirty = true;
-        saveButton.classList.remove("saved");
-        saveButton.classList.add("unsaved");
-        saveButton.disabled = false;
+      function drawEdges() {
+        edgeLayer.setAttribute(
+          "viewBox",
+          `0 0 ${viewport.clientWidth} ${viewport.clientHeight}`
+        );
+        edgeLayer.innerHTML = "";
+        const nodes = new Map(mapState.nodes.map((n) => [n.id, n]));
+        mapState.nodes.forEach((node) => {
+          if (!node.parentId) return;
+          const parent = nodes.get(node.parentId);
+          if (!parent || parent.collapsed) return;
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const start = { x: parent.position.x + 150, y: parent.position.y + 40 };
+          const end = { x: node.position.x, y: node.position.y + 20 };
+          const dx = (end.x - start.x) / 2;
+          const d = `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
+          path.setAttribute("d", d);
+          path.setAttribute("fill", "none");
+          path.setAttribute("stroke", "rgba(96,165,250,0.7)");
+          path.setAttribute("stroke-width", "2.5");
+          path.setAttribute("stroke-linecap", "round");
+          edgeLayer.appendChild(path);
+        });
+        mapInner.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${panState.scale})`;
+        edgeLayer.style.transform = mapInner.style.transform;
       }
 
-      function markFormSaved() {
-        formDirty = false;
-        saveButton.classList.remove("unsaved");
-        saveButton.classList.add("saved");
-        if (
-          !registroForm.nome.value.trim() &&
-          !registroForm.especialidade.value.trim() &&
-          !registroForm.procedimento.value.trim()
-        ) {
-          saveButton.disabled = true;
+      function addNode(parentId) {
+        if (!parentId) parentId = mapState.rootId;
+        pushHistory();
+        const newNode = {
+          id: crypto.randomUUID(),
+          parentId,
+          title: "Novo nó",
+          description: "Descrição",
+          tags: [],
+          collapsed: false,
+          position: { x: Math.random() * 160 + 80, y: Math.random() * 120 - 60 },
+          color: "#60a5fa",
+        };
+        mapState.nodes.push(newNode);
+        selectedId = newNode.id;
+        render();
+        saveToServer();
+      }
+
+      function deleteNode(nodeId) {
+        if (!nodeId) return;
+        pushHistory();
+        const toDelete = new Set([nodeId]);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          mapState.nodes.forEach((n) => {
+            if (toDelete.has(n.parentId) && !toDelete.has(n.id)) {
+              toDelete.add(n.id);
+              changed = true;
+            }
+          });
         }
+        mapState.nodes = mapState.nodes.filter((n) => !toDelete.has(n.id));
+        selectedId = mapState.rootId;
+        render();
+        saveToServer();
       }
 
-      function clearForm() {
-        registroForm.nome.value = "";
-        registroForm.especialidade.value = "";
-        registroForm.procedimento.value = "";
+      function autoLayout() {
+        pushHistory();
+        const nodes = mapState.nodes;
+        const levels = {};
+        const root = nodes.find((n) => !n.parentId || n.id === mapState.rootId);
+        const byParent = nodes.reduce((acc, n) => {
+          acc[n.parentId || "root"] = acc[n.parentId || "root"] || [];
+          acc[n.parentId || "root"].push(n);
+          return acc;
+        }, {});
+
+        function layout(node, depth, angleStart, angleEnd) {
+          levels[depth] = levels[depth] || 0;
+          const angle = (angleStart + angleEnd) / 2;
+          const radius = depth * 200;
+          node.position = {
+            x: Math.cos(angle) * radius,
+            y: Math.sin(angle) * radius,
+          };
+          const children = byParent[node.id] || [];
+          const slice = (angleEnd - angleStart) / Math.max(children.length, 1);
+          children.forEach((child, idx) => {
+            layout(child, depth + 1, angleStart + slice * idx, angleStart + slice * (idx + 1));
+          });
+        }
+
+        layout(root, 0, -Math.PI / 2, Math.PI / 2);
+        render();
+        saveToServer();
+      }
+
+      function toggleCollapse() {
+        const node = mapState.nodes.find((n) => n.id === selectedId);
+        if (!node) return;
+        pushHistory();
+        node.collapsed = !node.collapsed;
+        render();
+        saveToServer();
+      }
+
+      function addChildShortcut() {
+        const target = selectedId || mapState.rootId;
+        addNode(target);
+      }
+
+      function addSiblingShortcut() {
+        const node = mapState.nodes.find((n) => n.id === selectedId);
+        const parent = node ? node.parentId : mapState.rootId;
+        addNode(parent);
+      }
+
+      function handleUndo() {
+        if (!undoStack.length) return;
+        const last = undoStack.pop();
+        redoStack.push(JSON.stringify(mapState));
+        mapState = JSON.parse(last);
+        render();
+      }
+
+      function handleRedo() {
+        if (!redoStack.length) return;
+        undoStack.push(JSON.stringify(mapState));
+        mapState = JSON.parse(redoStack.pop());
+        render();
       }
 
       function handleSave() {
-        if (!currentSala) {
-          showToast("Selecione uma sala antes de salvar.", "error");
-          return;
-        }
-
-        const nome = registroForm.nome.value.trim();
-        const especialidade = registroForm.especialidade.value.trim();
-        const procedimento = registroForm.procedimento.value.trim();
-
-        if (!nome && !especialidade && !procedimento) {
-          showToast(
-            "Preencha pelo menos um dos campos antes de salvar.",
-            "error"
-          );
-          return;
-        }
-
-        saveButton.disabled = true;
-
-        google.script.run
-          .withSuccessHandler((result) => {
-            showToast("Registro salvo com sucesso.", "success");
-            clearForm();
-            markFormSaved();
-
-            google.script.run
-              .withSuccessHandler((registros) => {
-                registrosAtual = registros || [];
-                renderTabela();
-                renderEquipes();
-              })
-              .withFailureHandler(onError)
-              .getRegistrosPorSala(currentSala);
-          })
-          .withFailureHandler((err) => {
-            saveButton.disabled = false;
-            markFormUnsaved();
-            onError(err);
-          })
-          .addRegistro(currentSala, nome, especialidade, procedimento);
+        saveToServer(false);
       }
 
-      /* ==== Toast ==== */
-      function showToast(message, type) {
-        toastEl.classList.remove("success", "error");
-        if (type === "error") {
-          toastEl.classList.add("error");
-        } else {
-          toastEl.classList.add("success");
-        }
+      function setupPanZoom() {
+        viewport.addEventListener("pointerdown", (e) => {
+          if (e.target.closest(".node")) return;
+          isPanning = true;
+          panStart = { x: e.clientX - panState.x, y: e.clientY - panState.y };
+          mapWrapper.style.cursor = "grabbing";
+        });
 
-        toastMessageEl.textContent = message;
-        toastEl.classList.add("visible");
+        viewport.addEventListener("pointermove", (e) => {
+          if (!isPanning) return;
+          panState.x = e.clientX - panStart.x;
+          panState.y = e.clientY - panStart.y;
+          drawEdges();
+        });
 
-        setTimeout(() => {
-          toastEl.classList.remove("visible");
-        }, 2600);
+        window.addEventListener("pointerup", () => {
+          isPanning = false;
+          mapWrapper.style.cursor = "grab";
+        });
+
+        viewport.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          const delta = -e.deltaY * 0.001;
+          const newScale = Math.min(Math.max(panState.scale + delta, 0.4), 2.5);
+          panState.scale = newScale;
+          drawEdges();
+        });
       }
 
-      function onError(err) {
-        console.error(err);
-        showToast("Ocorreu um erro. Veja o console do Apps Script.", "error");
+      function setupHotkeys() {
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            addChildShortcut();
+          } else if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            addSiblingShortcut();
+          } else if (e.key === "Delete") {
+            e.preventDefault();
+            deleteNode(selectedId);
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            handleSave();
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            handleUndo();
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
+            e.preventDefault();
+            handleRedo();
+          }
+        });
       }
+
+      function bindButtons() {
+        btnAddChild.addEventListener("click", addChildShortcut);
+        btnAddSibling.addEventListener("click", addSiblingShortcut);
+        btnDelete.addEventListener("click", () => deleteNode(selectedId));
+        btnOrganize.addEventListener("click", autoLayout);
+        btnCollapse.addEventListener("click", toggleCollapse);
+        btnUndo.addEventListener("click", handleUndo);
+        btnRedo.addEventListener("click", handleRedo);
+        btnSave.addEventListener("click", handleSave);
+      }
+
+      loadFromServer();
+      setupPanZoom();
+      setupHotkeys();
+      bindButtons();
     </script>
   </body>
 </html>
