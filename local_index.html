@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mapa Mental Dinâmico</title>
+    <base target="_top" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #0b1224;
+        --surface: #111a33;
+        --border: #1f2a44;
+        --muted: #8ca0c5;
+        --text: #e5edff;
+        --primary: #60a5fa;
+        --primary-strong: #1d4ed8;
+        --accent: #a855f7;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.36);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 10% 10%, #1a2642 0, #0b1020 50%),
+          linear-gradient(180deg, #0b1224 0%, #0b0f1b 100%);
+        color: var(--text);
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px 8px;
+      }
+
+      .badge {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, #1d4ed8, #9333ea);
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #f8fbff;
+        box-shadow: var(--shadow);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px 12px;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+          inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      }
+
+      .toolbar button,
+      .toolbar .chip,
+      .toolbar .status {
+        border: 1px solid var(--border);
+        background: linear-gradient(140deg, #111a33, #0c1328);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.1s ease, border-color 0.2s ease,
+          box-shadow 0.2s ease;
+        box-shadow: var(--shadow);
+      }
+
+      .toolbar button:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 20px rgba(96, 165, 250, 0.25);
+      }
+
+      .toolbar button:disabled {
+        opacity: 0.55;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .toolbar .chip {
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-flex;
+        background: var(--success);
+      }
+
+      .status.unsaved .status-dot {
+        background: var(--danger);
+      }
+
+      .viewport {
+        position: relative;
+        flex: 1;
+        margin: 14px 14px 20px;
+        border-radius: 18px;
+        overflow: hidden;
+        background: radial-gradient(circle at 40% 20%, rgba(96, 165, 250, 0.12),
+            transparent 40%),
+          radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.1), transparent
+              35%),
+          linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(9, 10, 16, 0.95)
+              100%);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: var(--shadow);
+      }
+
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          );
+        background-size: 48px 48px;
+        pointer-events: none;
+      }
+
+      .map-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        cursor: grab;
+      }
+
+      .map-inner {
+        position: absolute;
+        transform-origin: 0 0;
+      }
+
+      svg.edges {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .node {
+        position: absolute;
+        min-width: 170px;
+        background: linear-gradient(145deg, #122142, #0e1530);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        cursor: grab;
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          border-color 0.2s ease;
+      }
+
+      .node:focus-within,
+      .node.selected {
+        border-color: var(--primary);
+        box-shadow: 0 16px 30px rgba(96, 165, 250, 0.35);
+        transform: translateY(-1px);
+      }
+
+      .node-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        outline: none;
+      }
+
+      .node-meta {
+        font-size: 0.82rem;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .node-tags {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        padding: 3px 7px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: rgba(96, 165, 250, 0.12);
+        border: 1px solid rgba(96, 165, 250, 0.3);
+      }
+
+      .node-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .chip-button {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 3px 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: opacity 0.15s ease, border-color 0.2s ease;
+      }
+
+      .chip-button:hover {
+        border-color: var(--primary);
+        opacity: 1;
+      }
+
+      .collapsed-hint {
+        font-size: 0.75rem;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 6px 8px;
+      }
+
+      .floating-card {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(11, 17, 30, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 6px;
+        min-width: 260px;
+      }
+
+      .floating-card h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .floating-card small {
+        color: var(--muted);
+      }
+
+      .key-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        padding: 11px 14px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.95);
+        color: #f8fbff;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        font-size: 0.9rem;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .sync-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.15);
+      }
+
+      .sync-dot.pending {
+        background: var(--danger);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);
+      }
+
+      @media (max-width: 860px) {
+        .toolbar {
+          flex-wrap: wrap;
+        }
+        .node {
+          min-width: 150px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <span class="badge">Mapa Mental</span>
+        <div>
+          <h1>Salas e Equipes (Sheets)</h1>
+          <div style="color: var(--muted); font-size: 0.9rem;">
+            Arraste, edite, conecte e sincronize com a planilha em tempo real.
+          </div>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <button id="btnAddChild">➕ Filho (Enter)</button>
+        <button id="btnAddSibling">➕ Irmão (Shift+Enter)</button>
+        <button id="btnDelete">🗑️ Remover (Del)</button>
+        <button id="btnOrganize">🧭 Auto-organizar</button>
+        <button id="btnCollapse">⤵️ Expandir/Colapsar</button>
+        <button id="btnUndo">↩️ Undo</button>
+        <button id="btnRedo">↪️ Redo</button>
+        <button id="btnSave">💾 Salvar (Ctrl/Cmd+S)</button>
+        <span class="status" id="syncStatus">
+          <span class="status-dot"></span> <strong>Sincronizado</strong>
+        </span>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <div class="grid"></div>
+        <div class="map-wrapper" id="mapWrapper">
+          <svg class="edges" id="edgeLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="map-inner" id="mapInner"></div>
+        </div>
+        <div class="floating-card">
+          <h3>Atalhos</h3>
+          <div class="key-row"><span>Enter</span><span>Novo filho</span></div>
+          <div class="key-row"><span>Shift + Enter</span><span>Novo irmão</span></div>
+          <div class="key-row"><span>Delete</span><span>Remover nó</span></div>
+          <div class="key-row"><span>Ctrl/Cmd + S</span><span>Salvar</span></div>
+          <div class="key-row"><span>Ctrl/Cmd + Z / Y</span><span>Undo/Redo</span></div>
+          <small>Arraste o fundo para mover o mapa. Scroll para zoom.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const mapInner = document.getElementById("mapInner");
+      const edgeLayer = document.getElementById("edgeLayer");
+      const viewport = document.getElementById("viewport");
+      const mapWrapper = document.getElementById("mapWrapper");
+      const toast = document.getElementById("toast");
+      const syncStatus = document.getElementById("syncStatus");
+
+      const btnAddChild = document.getElementById("btnAddChild");
+      const btnAddSibling = document.getElementById("btnAddSibling");
+      const btnDelete = document.getElementById("btnDelete");
+      const btnOrganize = document.getElementById("btnOrganize");
+      const btnCollapse = document.getElementById("btnCollapse");
+      const btnUndo = document.getElementById("btnUndo");
+      const btnRedo = document.getElementById("btnRedo");
+      const btnSave = document.getElementById("btnSave");
+
+      let mapState = { nodes: [], rootId: null };
+      let selectedId = null;
+      let isDraggingNode = false;
+      let dragOffset = { x: 0, y: 0 };
+      let panState = { x: 200, y: 120, scale: 1 };
+      let isPanning = false;
+      let panStart = { x: 0, y: 0 };
+      const undoStack = [];
+      const redoStack = [];
+      let savePending = false;
+      let saveTimer = null;
+
+      function defaultMap() {
+        const rootId = crypto.randomUUID();
+        return {
+          rootId,
+          nodes: [
+            {
+              id: rootId,
+              parentId: null,
+              title: "Hospital",
+              description: "Mapa mental das salas e equipes",
+              tags: ["dashboard", "sala"],
+              collapsed: false,
+              position: { x: 0, y: 0 },
+              color: "#60a5fa",
+            },
+            {
+              id: crypto.randomUUID(),
+              parentId: rootId,
+              title: "Sala 1",
+              description: "Procedimentos gerais",
+              tags: ["geral"],
+              collapsed: false,
+              position: { x: 240, y: -80 },
+              color: "#a855f7",
+            },
+            {
+              id: crypto.randomUUID(),
+              parentId: rootId,
+              title: "Sala 2",
+              description: "Urgência",
+              tags: ["urgência"],
+              collapsed: false,
+              position: { x: 240, y: 120 },
+              color: "#22c55e",
+            },
+          ],
+        };
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function setStatus(unsaved) {
+        savePending = unsaved;
+        const dot = syncStatus.querySelector(".status-dot");
+        const label = syncStatus.querySelector("strong");
+        if (unsaved) {
+          dot.classList.add("unsaved");
+          label.textContent = "Alterações pendentes";
+        } else {
+          dot.classList.remove("unsaved");
+          label.textContent = "Sincronizado";
+        }
+      }
+
+      function pushHistory() {
+        undoStack.push(JSON.stringify(mapState));
+        if (undoStack.length > 40) undoStack.shift();
+        redoStack.length = 0;
+      }
+
+      function loadFromServer() {
+        try {
+          const saved = localStorage.getItem("mapa-dinamico-local");
+          if (saved) {
+            mapState = JSON.parse(saved);
+          } else {
+            mapState = defaultMap();
+          }
+        } catch (error) {
+          console.error("Falha ao carregar o mapa local", error);
+          mapState = defaultMap();
+        }
+        render();
+      }
+
+      function saveToServer(debounced = true) {
+        setStatus(true);
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          try {
+            localStorage.setItem("mapa-dinamico-local", JSON.stringify(mapState));
+            setStatus(false);
+            showToast("Mapa salvo localmente");
+          } catch (error) {
+            console.error("Falha ao salvar localmente", error);
+            showToast("Erro ao salvar localmente");
+          }
+        }, debounced ? 600 : 0);
+      }
+
+      function render() {
+        mapInner.innerHTML = "";
+        edgeLayer.innerHTML = "";
+        const visible = new Set();
+
+        const mapById = new Map(mapState.nodes.map((n) => [n.id, n]));
+
+        function isVisible(node) {
+          let current = node;
+          while (current) {
+            if (current.collapsed && current.id !== node.id) return false;
+            current = mapById.get(current.parentId);
+          }
+          return true;
+        }
+
+        mapState.nodes.forEach((node) => {
+          if (!isVisible(node)) return;
+          visible.add(node.id);
+          const el = document.createElement("div");
+          el.className = "node" + (node.id === selectedId ? " selected" : "");
+          el.style.left = `${node.position.x}px`;
+          el.style.top = `${node.position.y}px`;
+          el.style.borderColor = node.color || "var(--border)";
+
+          const title = document.createElement("div");
+          title.className = "node-title";
+          title.contentEditable = "true";
+          title.textContent = node.title;
+          title.addEventListener("input", () => {
+            node.title = title.textContent.trim() || "(sem nome)";
+            setStatus(true);
+            saveToServer();
+          });
+
+          const meta = document.createElement("div");
+          meta.className = "node-meta";
+          meta.textContent = node.description || "Sem descrição";
+          meta.contentEditable = "true";
+          meta.addEventListener("input", () => {
+            node.description = meta.textContent.trim();
+            setStatus(true);
+            saveToServer();
+          });
+
+          const tags = document.createElement("div");
+          tags.className = "node-tags";
+          (node.tags || []).forEach((tag) => {
+            const t = document.createElement("span");
+            t.className = "tag";
+            t.textContent = tag;
+            tags.appendChild(t);
+          });
+
+          const actions = document.createElement("div");
+          actions.className = "node-actions";
+          const toggle = document.createElement("button");
+          toggle.className = "chip-button";
+          toggle.textContent = node.collapsed ? "Expandir" : "Colapsar";
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            node.collapsed = !node.collapsed;
+            render();
+            saveToServer();
+          });
+          actions.appendChild(toggle);
+
+          if (node.collapsed) {
+            const hint = document.createElement("div");
+            hint.className = "collapsed-hint";
+            hint.textContent = "Filhos ocultos";
+            actions.appendChild(hint);
+          }
+
+          el.appendChild(title);
+          el.appendChild(meta);
+          el.appendChild(tags);
+          el.appendChild(actions);
+
+          el.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0) return;
+            isDraggingNode = true;
+            selectedId = node.id;
+            dragOffset = { x: e.clientX - node.position.x, y: e.clientY - node.position.y };
+            el.setPointerCapture(e.pointerId);
+          });
+
+          el.addEventListener("pointermove", (e) => {
+            if (!isDraggingNode || selectedId !== node.id) return;
+            const x = (e.clientX - dragOffset.x) / panState.scale;
+            const y = (e.clientY - dragOffset.y) / panState.scale;
+            node.position = { x, y };
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            drawEdges();
+            setStatus(true);
+          });
+
+          el.addEventListener("pointerup", (e) => {
+            if (isDraggingNode) {
+              el.releasePointerCapture(e.pointerId);
+              isDraggingNode = false;
+              saveToServer();
+            }
+          });
+
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedId = node.id;
+            render();
+          });
+
+          mapInner.appendChild(el);
+        });
+
+        drawEdges();
+      }
+
+      function drawEdges() {
+        edgeLayer.setAttribute(
+          "viewBox",
+          `0 0 ${viewport.clientWidth} ${viewport.clientHeight}`
+        );
+        edgeLayer.innerHTML = "";
+        const nodes = new Map(mapState.nodes.map((n) => [n.id, n]));
+        mapState.nodes.forEach((node) => {
+          if (!node.parentId) return;
+          const parent = nodes.get(node.parentId);
+          if (!parent || parent.collapsed) return;
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const start = { x: parent.position.x + 150, y: parent.position.y + 40 };
+          const end = { x: node.position.x, y: node.position.y + 20 };
+          const dx = (end.x - start.x) / 2;
+          const d = `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
+          path.setAttribute("d", d);
+          path.setAttribute("fill", "none");
+          path.setAttribute("stroke", "rgba(96,165,250,0.7)");
+          path.setAttribute("stroke-width", "2.5");
+          path.setAttribute("stroke-linecap", "round");
+          edgeLayer.appendChild(path);
+        });
+        mapInner.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${panState.scale})`;
+        edgeLayer.style.transform = mapInner.style.transform;
+      }
+
+      function addNode(parentId) {
+        if (!parentId) parentId = mapState.rootId;
+        pushHistory();
+        const newNode = {
+          id: crypto.randomUUID(),
+          parentId,
+          title: "Novo nó",
+          description: "Descrição",
+          tags: [],
+          collapsed: false,
+          position: { x: Math.random() * 160 + 80, y: Math.random() * 120 - 60 },
+          color: "#60a5fa",
+        };
+        mapState.nodes.push(newNode);
+        selectedId = newNode.id;
+        render();
+        saveToServer();
+      }
+
+      function deleteNode(nodeId) {
+        if (!nodeId) return;
+        pushHistory();
+        const toDelete = new Set([nodeId]);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          mapState.nodes.forEach((n) => {
+            if (toDelete.has(n.parentId) && !toDelete.has(n.id)) {
+              toDelete.add(n.id);
+              changed = true;
+            }
+          });
+        }
+        mapState.nodes = mapState.nodes.filter((n) => !toDelete.has(n.id));
+        selectedId = mapState.rootId;
+        render();
+        saveToServer();
+      }
+
+      function autoLayout() {
+        pushHistory();
+        const nodes = mapState.nodes;
+        const levels = {};
+        const root = nodes.find((n) => !n.parentId || n.id === mapState.rootId);
+        const byParent = nodes.reduce((acc, n) => {
+          acc[n.parentId || "root"] = acc[n.parentId || "root"] || [];
+          acc[n.parentId || "root"].push(n);
+          return acc;
+        }, {});
+
+        function layout(node, depth, angleStart, angleEnd) {
+          levels[depth] = levels[depth] || 0;
+          const angle = (angleStart + angleEnd) / 2;
+          const radius = depth * 200;
+          node.position = {
+            x: Math.cos(angle) * radius,
+            y: Math.sin(angle) * radius,
+          };
+          const children = byParent[node.id] || [];
+          const slice = (angleEnd - angleStart) / Math.max(children.length, 1);
+          children.forEach((child, idx) => {
+            layout(child, depth + 1, angleStart + slice * idx, angleStart + slice * (idx + 1));
+          });
+        }
+
+        layout(root, 0, -Math.PI / 2, Math.PI / 2);
+        render();
+        saveToServer();
+      }
+
+      function toggleCollapse() {
+        const node = mapState.nodes.find((n) => n.id === selectedId);
+        if (!node) return;
+        pushHistory();
+        node.collapsed = !node.collapsed;
+        render();
+        saveToServer();
+      }
+
+      function addChildShortcut() {
+        const target = selectedId || mapState.rootId;
+        addNode(target);
+      }
+
+      function addSiblingShortcut() {
+        const node = mapState.nodes.find((n) => n.id === selectedId);
+        const parent = node ? node.parentId : mapState.rootId;
+        addNode(parent);
+      }
+
+      function handleUndo() {
+        if (!undoStack.length) return;
+        const last = undoStack.pop();
+        redoStack.push(JSON.stringify(mapState));
+        mapState = JSON.parse(last);
+        render();
+      }
+
+      function handleRedo() {
+        if (!redoStack.length) return;
+        undoStack.push(JSON.stringify(mapState));
+        mapState = JSON.parse(redoStack.pop());
+        render();
+      }
+
+      function handleSave() {
+        saveToServer(false);
+      }
+
+      function setupPanZoom() {
+        viewport.addEventListener("pointerdown", (e) => {
+          if (e.target.closest(".node")) return;
+          isPanning = true;
+          panStart = { x: e.clientX - panState.x, y: e.clientY - panState.y };
+          mapWrapper.style.cursor = "grabbing";
+        });
+
+        viewport.addEventListener("pointermove", (e) => {
+          if (!isPanning) return;
+          panState.x = e.clientX - panStart.x;
+          panState.y = e.clientY - panStart.y;
+          drawEdges();
+        });
+
+        window.addEventListener("pointerup", () => {
+          isPanning = false;
+          mapWrapper.style.cursor = "grab";
+        });
+
+        viewport.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          const delta = -e.deltaY * 0.001;
+          const newScale = Math.min(Math.max(panState.scale + delta, 0.4), 2.5);
+          panState.scale = newScale;
+          drawEdges();
+        });
+      }
+
+      function setupHotkeys() {
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            addChildShortcut();
+          } else if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            addSiblingShortcut();
+          } else if (e.key === "Delete") {
+            e.preventDefault();
+            deleteNode(selectedId);
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            handleSave();
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            handleUndo();
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
+            e.preventDefault();
+            handleRedo();
+          }
+        });
+      }
+
+      function bindButtons() {
+        btnAddChild.addEventListener("click", addChildShortcut);
+        btnAddSibling.addEventListener("click", addSiblingShortcut);
+        btnDelete.addEventListener("click", () => deleteNode(selectedId));
+        btnOrganize.addEventListener("click", autoLayout);
+        btnCollapse.addEventListener("click", toggleCollapse);
+        btnUndo.addEventListener("click", handleUndo);
+        btnRedo.addEventListener("click", handleRedo);
+        btnSave.addEventListener("click", handleSave);
+      }
+
+      loadFromServer();
+      setupPanZoom();
+      setupHotkeys();
+      bindButtons();
+    </script>
+  </body>
+</html>
