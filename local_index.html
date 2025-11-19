@@ -6,18 +6,18 @@
     <base target="_top" />
     <style>
       :root {
-        --bg: #0f172a;
-        --panel: #0b1224;
-        --surface: #111a33;
-        --border: #1f2a44;
-        --muted: #8ca0c5;
-        --text: #e5edff;
-        --primary: #60a5fa;
-        --primary-strong: #1d4ed8;
-        --accent: #a855f7;
-        --success: #22c55e;
+        --bg: #0b1220;
+        --panel: #0d1526;
+        --surface: #101b31;
+        --border: #1c2941;
+        --muted: #9aa8c5;
+        --text: #e9eef7;
+        --primary: #6ea8ff;
+        --primary-strong: #2c4c91;
+        --accent: #8b9cc7;
+        --success: #2ed080;
         --danger: #ef4444;
-        --shadow: 0 16px 40px rgba(0, 0, 0, 0.36);
+        --shadow: 0 14px 36px rgba(0, 0, 0, 0.32);
       }
 
       * {
@@ -28,8 +28,11 @@
         margin: 0;
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
           "Segoe UI", sans-serif;
-        background: radial-gradient(circle at 10% 10%, #1a2642 0, #0b1020 50%),
-          linear-gradient(180deg, #0b1224 0%, #0b0f1b 100%);
+        background: radial-gradient(circle at 12% 18%, rgba(110, 168, 255, 0.12),
+              transparent 30%),
+          radial-gradient(circle at 70% 12%, rgba(46, 208, 128, 0.08), transparent
+              28%),
+          linear-gradient(180deg, #0c1322 0%, #0a0f1a 100%);
         color: var(--text);
         min-height: 100vh;
         overflow: hidden;
@@ -51,17 +54,17 @@
       .badge {
         padding: 6px 10px;
         border-radius: 999px;
-        background: linear-gradient(120deg, #1d4ed8, #9333ea);
-        font-size: 0.78rem;
+        background: linear-gradient(120deg, #2c4c91, #233c6d);
+        font-size: 0.82rem;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: #f8fbff;
+        color: #f7f9fd;
         box-shadow: var(--shadow);
       }
 
       h1 {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         font-weight: 700;
         letter-spacing: 0.01em;
       }
@@ -71,10 +74,10 @@
         align-items: center;
         gap: 10px;
         padding: 10px 20px 12px;
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(12px);
-        border-top: 1px solid rgba(255, 255, 255, 0.04);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        background: rgba(10, 16, 28, 0.85);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03),
           inset 0 1px 0 rgba(255, 255, 255, 0.03);
       }
@@ -83,10 +86,10 @@
       .toolbar .chip,
       .toolbar .status {
         border: 1px solid var(--border);
-        background: linear-gradient(140deg, #111a33, #0c1328);
+        background: linear-gradient(140deg, #0f192d, #0c1324);
         color: var(--text);
         border-radius: 12px;
-        padding: 8px 12px;
+        padding: 9px 12px;
         font-size: 0.9rem;
         cursor: pointer;
         display: inline-flex;
@@ -100,7 +103,7 @@
       .toolbar button:hover {
         transform: translateY(-1px);
         border-color: var(--primary);
-        box-shadow: 0 10px 20px rgba(96, 165, 250, 0.25);
+        box-shadow: 0 10px 20px rgba(110, 168, 255, 0.23);
       }
 
       .toolbar button:disabled {
@@ -261,27 +264,41 @@
         padding: 6px 8px;
       }
 
-      .floating-card {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        padding: 12px 14px;
-        border-radius: 12px;
-        background: rgba(11, 17, 30, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+      .shortcut-panel {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: rgba(12, 18, 32, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(8px);
         box-shadow: var(--shadow);
         display: grid;
-        gap: 6px;
+        gap: 8px;
         min-width: 260px;
+        max-width: 360px;
+        width: min(360px, calc(100% - 32px));
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 10;
       }
 
-      .floating-card h3 {
+      .shortcut-panel.open {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .shortcut-panel h3 {
         margin: 0;
         font-size: 0.95rem;
+        color: var(--text);
       }
 
-      .floating-card small {
+      .shortcut-panel small {
         color: var(--muted);
       }
 
@@ -331,6 +348,12 @@
         .node {
           min-width: 150px;
         }
+        .shortcut-panel {
+          right: 12px;
+          left: 12px;
+          width: auto;
+          bottom: 12px;
+        }
       }
     </style>
   </head>
@@ -347,14 +370,15 @@
       </header>
 
       <div class="toolbar">
-        <button id="btnAddChild">➕ Filho (Enter)</button>
-        <button id="btnAddSibling">➕ Irmão (Shift+Enter)</button>
-        <button id="btnDelete">🗑️ Remover (Del)</button>
-        <button id="btnOrganize">🧭 Auto-organizar</button>
-        <button id="btnCollapse">⤵️ Expandir/Colapsar</button>
-        <button id="btnUndo">↩️ Undo</button>
-        <button id="btnRedo">↪️ Redo</button>
-        <button id="btnSave">💾 Salvar (Ctrl/Cmd+S)</button>
+        <button id="btnAddChild">Novo filho (Enter)</button>
+        <button id="btnAddSibling">Novo irmão (Shift+Enter)</button>
+        <button id="btnDelete">Remover (Del)</button>
+        <button id="btnOrganize">Auto-organizar</button>
+        <button id="btnCollapse">Expandir/Colapsar</button>
+        <button id="btnUndo">Undo</button>
+        <button id="btnRedo">Redo</button>
+        <button id="btnSave">Salvar (Ctrl/Cmd+S)</button>
+        <button id="btnShortcuts">Atalhos</button>
         <span class="status" id="syncStatus">
           <span class="status-dot"></span> <strong>Sincronizado</strong>
         </span>
@@ -366,7 +390,7 @@
           <svg class="edges" id="edgeLayer" xmlns="http://www.w3.org/2000/svg"></svg>
           <div class="map-inner" id="mapInner"></div>
         </div>
-        <div class="floating-card">
+        <div class="shortcut-panel" id="shortcutPanel">
           <h3>Atalhos</h3>
           <div class="key-row"><span>Enter</span><span>Novo filho</span></div>
           <div class="key-row"><span>Shift + Enter</span><span>Novo irmão</span></div>
@@ -387,6 +411,8 @@
       const mapWrapper = document.getElementById("mapWrapper");
       const toast = document.getElementById("toast");
       const syncStatus = document.getElementById("syncStatus");
+      const shortcutPanel = document.getElementById("shortcutPanel");
+      const btnShortcuts = document.getElementById("btnShortcuts");
 
       const btnAddChild = document.getElementById("btnAddChild");
       const btnAddSibling = document.getElementById("btnAddSibling");
@@ -757,6 +783,40 @@
         saveToServer(false);
       }
 
+      function setupShortcutsPanel() {
+        btnShortcuts.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleShortcuts();
+        });
+
+        document.addEventListener("click", (e) => {
+          if (
+            shortcutPanel.classList.contains("open") &&
+            !shortcutPanel.contains(e.target) &&
+            e.target !== btnShortcuts
+          ) {
+            closeShortcuts();
+          }
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeShortcuts();
+          }
+        });
+      }
+
+      function toggleShortcuts() {
+        const isOpen = shortcutPanel.classList.toggle("open");
+        if (isOpen) {
+          shortcutPanel.setAttribute("aria-live", "polite");
+        }
+      }
+
+      function closeShortcuts() {
+        shortcutPanel.classList.remove("open");
+      }
+
       function setupPanZoom() {
         viewport.addEventListener("pointerdown", (e) => {
           if (e.target.closest(".node")) return;
@@ -825,6 +885,7 @@
       setupPanZoom();
       setupHotkeys();
       bindButtons();
+      setupShortcutsPanel();
     </script>
   </body>
 </html>
