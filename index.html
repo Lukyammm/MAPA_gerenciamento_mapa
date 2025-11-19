@@ -62,10 +62,13 @@
             font-family: var(--font-family);
         }
         body {
-            background-color: var(--bg-color);
+            background: radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.08), transparent 35%),
+                radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.08), transparent 32%),
+                linear-gradient(135deg, #f8fafc 0%, #e5ebf5 100%);
             color: var(--text-color);
             display: flex;
             min-height: 100vh;
+            overflow: hidden;
         }
         /* Textura de cédula */
         body::before {
@@ -82,7 +85,7 @@
             pointer-events: none;
             z-index: -1;
         }
-        /* Sidebar */
+        /* Sidebar (desativada no novo layout, mantida para compatibilidade de scripts) */
         .sidebar {
             width: var(--sidebar-width);
             background: linear-gradient(180deg, #014f51, color-mix(in srgb, #000000 75%, #0a5c65));
@@ -92,7 +95,7 @@
             overflow-y: auto;
             transition: all 0.3s;
             z-index: 1000;
-            display: flex;
+            display: none;
             flex-direction: column;
         }
         .sidebar-header {
@@ -202,11 +205,227 @@
         .hidden {
             display: none !important;
         }
+        /* Novo palco de visualização hierárquica */
+        .graph-layout {
+            position: relative;
+            flex: 1;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(15, 23, 42, 0.14), 0 10px 30px rgba(15, 23, 42, 0.08) inset;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            overflow: hidden;
+            isolation: isolate;
+            min-height: 70vh;
+        }
+        .graph-surface {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.05), transparent 45%),
+                radial-gradient(circle at 70% 70%, rgba(16, 185, 129, 0.05), transparent 45%);
+        }
+        .graph-toolbar {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .graph-toolbar .tool-button {
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.65);
+            color: var(--dark-color);
+            backdrop-filter: blur(14px);
+            padding: 10px 12px;
+            border-radius: 14px;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.12);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+        }
+        .graph-toolbar .tool-button:hover,
+        .graph-toolbar .tool-button:focus-visible {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .graph-toolbar .tool-button:active {
+            transform: translateY(1px) scale(0.99);
+        }
+        .graph-toolbar .tool-button[aria-pressed="true"] {
+            background: linear-gradient(120deg, rgba(59, 130, 246, 0.16), rgba(16, 185, 129, 0.18));
+            border-color: color-mix(in srgb, var(--primary-color) 40%, white 60%);
+        }
+        .graph-toolbar .divider {
+            width: 1px;
+            background: rgba(15, 23, 42, 0.08);
+            margin: 0 6px;
+        }
+        .graph-viewport {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            touch-action: none;
+        }
+        .graph-stage {
+            width: 100%;
+            height: 100%;
+        }
+        .graph-stage .link {
+            stroke: rgba(31, 41, 55, 0.25);
+            stroke-width: 2.2;
+            fill: none;
+            stroke-linecap: round;
+            filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.12));
+        }
+        .graph-stage .link-status-livre { stroke: color-mix(in srgb, var(--success-color) 75%, white 25%); }
+        .graph-stage .link-status-em-uso { stroke: color-mix(in srgb, var(--warning-color) 80%, black 20%); }
+        .graph-stage .link-status-vencido { stroke: color-mix(in srgb, var(--danger-color) 90%, black 10%); }
+        .graph-stage .link-status-proximo { stroke: color-mix(in srgb, var(--warning-color) 70%, white 30%); }
+        .graph-stage .node {
+            cursor: pointer;
+            transition: filter 180ms ease, transform 180ms ease;
+        }
+        .graph-stage .node:hover,
+        .graph-stage .node:focus-visible { filter: drop-shadow(0 10px 22px rgba(59, 130, 246, 0.25)); }
+        .graph-stage .node circle {
+            fill: rgba(255, 255, 255, 0.82);
+            stroke: rgba(255, 255, 255, 0.75);
+            stroke-width: 1.4;
+        }
+        .graph-stage .node .glow { filter: blur(12px); opacity: 0.65; }
+        .graph-stage .node text {
+            font-weight: 700;
+            fill: var(--dark-color);
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+        .node-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 999px;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.75);
+            color: var(--dark-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+        }
+        .badge-status-livre { color: var(--success-color); }
+        .badge-status-em-uso { color: var(--warning-color); }
+        .badge-status-vencido { color: var(--danger-color); }
+        .badge-status-proximo { color: var(--warning-color); }
+        .graph-popover {
+            position: absolute;
+            min-width: 260px;
+            max-width: 360px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 18px;
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 14px 16px;
+            z-index: 20;
+            transform: translate(-50%, 12px);
+            transition: opacity 140ms ease, transform 140ms ease;
+        }
+        .graph-popover[hidden] { display: none; }
+        .graph-popover header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .graph-popover .title {
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .graph-popover .meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        .graph-popover .meta span {
+            background: rgba(243, 244, 246, 0.7);
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .graph-popover .actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .graph-popover button {
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 120ms ease, box-shadow 120ms ease;
+        }
+        .graph-popover button:hover,
+        .graph-popover button:focus-visible {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
+            outline: none;
+        }
+        .graph-empty {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: var(--muted-color);
+            font-weight: 700;
+            text-align: center;
+            padding: 28px;
+        }
+        .doc-section {
+            background: rgba(255,255,255,0.86);
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.12);
+            border-radius: 18px;
+            padding: 16px;
+            line-height: 1.5;
+        }
+        .doc-section h3 { margin-bottom: 10px; }
+        .doc-section ol { padding-left: 18px; margin: 0; display: grid; gap: 6px; }
+        .doc-section ul { padding-left: 18px; margin: 8px 0; }
+        @media (prefers-reduced-motion: reduce) {
+            .graph-toolbar .tool-button,
+            .graph-stage .node,
+            .graph-popover,
+            .graph-popover button {
+                transition: none !important;
+            }
+        }
         .main-content {
             flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 20px;
+            margin-left: 0;
+            padding: 24px;
             transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
         /* Header */
         .header {
@@ -2394,17 +2613,48 @@
                         <div class="card-description">Armários com tempo excedido</div>
                     </div>
                 </div>
-                <!-- Filtros -->
-                <div class="filters">
-                    <button class="filter-btn active" data-filter="todos">Todos</button>
-                    <button class="filter-btn" data-filter="livre">Livre</button>
-                    <button class="filter-btn" data-filter="em-uso">Em uso</button>
-                    <button class="filter-btn" data-filter="proximo">Próximo do horário</button>
-                    <button class="filter-btn" data-filter="vencido">Vencido</button>
+                <div class="graph-layout" aria-live="polite">
+                    <div class="graph-surface" aria-hidden="true"></div>
+                    <div class="graph-toolbar" role="toolbar" aria-label="Ferramentas de navegação">
+                        <button class="tool-button filter-btn active" data-filter="todos" aria-pressed="true"><i class="fas fa-layer-group"></i> Todos</button>
+                        <button class="tool-button filter-btn" data-filter="livre" aria-pressed="false"><i class="fas fa-check"></i> Livres</button>
+                        <button class="tool-button filter-btn" data-filter="em-uso" aria-pressed="false"><i class="fas fa-lock"></i> Em uso</button>
+                        <button class="tool-button filter-btn" data-filter="proximo" aria-pressed="false"><i class="fas fa-hourglass-half"></i> Próximo</button>
+                        <button class="tool-button filter-btn" data-filter="vencido" aria-pressed="false"><i class="fas fa-bolt"></i> Vencido</button>
+                        <div class="divider" aria-hidden="true"></div>
+                        <button class="tool-button" id="tool-zoom-in" aria-label="Aproximar"><i class="fas fa-magnifying-glass-plus"></i></button>
+                        <button class="tool-button" id="tool-zoom-out" aria-label="Afastar"><i class="fas fa-magnifying-glass-minus"></i></button>
+                        <button class="tool-button" id="tool-reset" aria-label="Resetar posição"><i class="fas fa-bullseye"></i></button>
+                        <div class="divider" aria-hidden="true"></div>
+                        <button class="tool-button" id="tool-expand" aria-pressed="false"><i class="fas fa-diagram-project"></i> Expandir tudo</button>
+                        <button class="tool-button" id="tool-collapse" aria-pressed="false"><i class="fas fa-compress"></i> Colapsar tudo</button>
+                    </div>
+                    <div class="graph-viewport" id="graph-viewport" aria-label="Mapa hierárquico dos armários">
+                        <svg class="graph-stage" id="graph-stage" role="application" aria-describedby="graph-help">
+                            <g id="graph-group"></g>
+                        </svg>
+                        <div class="graph-empty" id="graph-empty" hidden>Carregando nós...</div>
+                        <div class="graph-popover" id="graph-popover" hidden role="dialog" aria-live="polite"></div>
+                    </div>
+                    <p id="graph-help" class="sr-only">Use o mouse ou touch para arrastar e aplicar zoom. Selecione um nó para colapsar ou expandir e acessar detalhes.</p>
                 </div>
-                <!-- Tabela de Armários -->
-                <div class="armarios-grid" id="armarios-container">
-                    <!-- Os armários serão carregados aqui via JavaScript -->
+                <div class="doc-section" aria-label="Documentação rápida do mapa">
+                    <h3>Como usar</h3>
+                    <ol>
+                        <li>Use os botões da barra flutuante para filtrar status, aplicar zoom ou redefinir o enquadramento.</li>
+                        <li>Arraste a área em branco para fazer pan; role ou use os controles para zoom dentro dos limites seguros.</li>
+                        <li>Clique ou pressione Enter em um nó para colapsar/expandir a subárvore. Nó de armário abre detalhes.</li>
+                        <li>Os detalhes exibem ações rápidas: focar no nó, colapsar/expandir ou abrir o modal completo.</li>
+                        <li>Navegue por teclado usando Tab/Shift+Tab para focar nós; o popover acompanha o foco.</li>
+                    </ol>
+                    <h4>Checklist de testes funcionais e visuais</h4>
+                    <ul>
+                        <li>Filtragem por status atualiza nós e conexões com cores corretas e mensagens acessíveis.</li>
+                        <li>Pan/zoom limitados funcionando com mouse e touch, sem salto de viewport.</li>
+                        <li>Colapso/expansão mantém animações curtas e respeita <code>prefers-reduced-motion</code>.</li>
+                        <li>Popover apresenta contraste suficiente, navegação por teclado e ações rápidas operantes.</li>
+                        <li>Dados carregados de unidades/setores/armários correspondem ao back-end (lockers/usuários).</li>
+                    </ul>
                 </div>
             </div>
             <!-- Visitantes -->
@@ -3158,7 +3408,12 @@
                 carregamentoTermosId: 0,
                 autenticado: false,
                 usuarioAutenticado: null,
-                liberacao: criarEstadoLiberacaoInicial()
+                liberacao: criarEstadoLiberacaoInicial(),
+                grafo: {
+                    colapsados: new Set(),
+                    foco: null,
+                    transform: { x: 0, y: 0, scale: 1 }
+                }
             };
         }
         let estado = criarEstadoInicial();
@@ -3429,7 +3684,11 @@
             notificationBell: document.getElementById('notification-bell'),
             notificationPanel: document.getElementById('notification-panel'),
             notificationBadge: document.querySelector('.notification-badge'),
-            armariosContainer: document.getElementById('armarios-container'),
+            graphGroup: document.getElementById('graph-group'),
+            graphStage: document.getElementById('graph-stage'),
+            graphViewport: document.getElementById('graph-viewport'),
+            graphPopover: document.getElementById('graph-popover'),
+            graphEmpty: document.getElementById('graph-empty'),
             armarioModal: document.getElementById('armario-modal'),
             usuarioModal: document.getElementById('usuario-modal'),
             modalTitle: document.getElementById('modal-title'),
@@ -4918,11 +5177,55 @@
             // Filtros
             elementos.filterBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    elementos.filterBtns.forEach(b => b.classList.remove('active'));
+                    elementos.filterBtns.forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-pressed', 'false');
+                    });
                     this.classList.add('active');
+                    this.setAttribute('aria-pressed', 'true');
                     estado.filtroAtual = this.dataset.filter;
                     renderizarArmarios();
                 });
+            });
+            configurarPanZoom();
+            const zoomIn = document.getElementById('tool-zoom-in');
+            const zoomOut = document.getElementById('tool-zoom-out');
+            const zoomReset = document.getElementById('tool-reset');
+            const expandir = document.getElementById('tool-expand');
+            const colapsar = document.getElementById('tool-collapse');
+            if (elementos.graphPopover) {
+                elementos.graphPopover.addEventListener('click', event => {
+                    const botao = event.target.closest('button');
+                    if (!botao) return;
+                    const acao = botao.dataset.acao;
+                    const focoId = estado.grafo.foco;
+                    const nodeAtual = (coletarNosVisiveis(construirHierarquiaArmarios(estado.armarios || [])).visiveis || []).find(n => n.id === focoId);
+                    if (!nodeAtual) return;
+                    if (acao === 'foco') {
+                        estado.grafo.transform.x = (elementos.graphViewport.getBoundingClientRect().width / 2) - (nodeAtual.x * estado.grafo.transform.scale);
+                        estado.grafo.transform.y = (elementos.graphViewport.getBoundingClientRect().height / 2) - (nodeAtual.y * estado.grafo.transform.scale);
+                        aplicarTransformacaoGrafo();
+                    } else if (acao === 'colapso') {
+                        alternarColapsoNo(nodeAtual.id);
+                    } else if (acao === 'abrir' && nodeAtual.dados) {
+                        abrirModalArmario(nodeAtual.dados);
+                    }
+                });
+            }
+            if (zoomIn) zoomIn.addEventListener('click', () => ajustarZoom(1.1));
+            if (zoomOut) zoomOut.addEventListener('click', () => ajustarZoom(0.9));
+            if (zoomReset) zoomReset.addEventListener('click', centralizarGrafo);
+            if (expandir) expandir.addEventListener('click', () => {
+                estado.grafo.colapsados.clear();
+                expandir.setAttribute('aria-pressed', 'true');
+                colapsar?.setAttribute('aria-pressed', 'false');
+                atualizarGrafoArmarios();
+            });
+            if (colapsar) colapsar.addEventListener('click', () => {
+                (estado.grafo.colapsados = new Set(coletarNosVisiveis(construirHierarquiaArmarios(estado.armarios || [])).visiveis.map(n => n.id))).delete('root');
+                colapsar.setAttribute('aria-pressed', 'true');
+                expandir?.setAttribute('aria-pressed', 'false');
+                atualizarGrafoArmarios();
             });
             const padraoLocalLiberacao = obterDataHoraLocalPadrao();
             if (elementos.liberacaoDataInicio) {
@@ -5176,77 +5479,306 @@
         }
         // Renderizar lista de armários no dashboard
         function renderizarArmarios() {
-            elementos.armariosContainer.innerHTML = '';
-            const perfil = estado.perfilAtual;
-            const unidadeFiltro = estado.unidadeAtual;
-            const perfilNormalizado = normalizarTexto(perfil);
-            const unidadeFiltroNormalizado = normalizarTexto(unidadeFiltro);
-            let armariosParaExibir = estado.armarios.filter(a => {
+            atualizarResumoDashboardLocal();
+            atualizarGrafoArmarios();
+        }
+
+        function construirHierarquiaArmarios(lista) {
+            const perfilNormalizado = normalizarTexto(estado.perfilAtual);
+            const unidadeFiltroNormalizado = normalizarTexto(estado.unidadeAtual);
+            const root = { id: 'root', label: 'Mapa de Armários', tipo: 'root', depth: 0, children: [], status: 'todos' };
+            const unidadesMap = new Map();
+            const setoresMap = new Map();
+
+            const filtrados = lista.filter(a => {
                 const tipoNormalizado = normalizarTexto(a.tipo);
                 const correspondePerfil = perfilNormalizado === 'geral' || perfilNormalizado === 'todos' || tipoNormalizado === perfilNormalizado;
-                const correspondeUnidade = unidadeFiltroNormalizado === 'todas' ||
-                    normalizarTexto(a.unidade) === unidadeFiltroNormalizado;
-                return correspondePerfil && correspondeUnidade;
+                const correspondeUnidade = unidadeFiltroNormalizado === 'todas' || normalizarTexto(a.unidade) === unidadeFiltroNormalizado;
+                const correspondeStatus = estado.filtroAtual === 'todos' || a.status === estado.filtroAtual;
+                return correspondePerfil && correspondeUnidade && correspondeStatus;
             });
-            // Aplicar filtro
-            if (estado.filtroAtual !== 'todos') {
-                armariosParaExibir = armariosParaExibir.filter(a => a.status === estado.filtroAtual);
+
+            filtrados.forEach(armario => {
+                const unidadeNome = armario.unidade || 'Sem unidade';
+                const setorNome = armario.setor || 'Geral';
+                const unidadeId = `unidade-${unidadeNome}`;
+                const setorId = `${unidadeId}-setor-${setorNome}`;
+
+                if (!unidadesMap.has(unidadeId)) {
+                    const node = { id: unidadeId, label: unidadeNome, tipo: 'unidade', depth: 1, children: [], status: 'todos' };
+                    unidadesMap.set(unidadeId, node);
+                    root.children.push(node);
+                }
+                if (!setoresMap.has(setorId)) {
+                    const parent = unidadesMap.get(unidadeId);
+                    const node = { id: setorId, label: setorNome, tipo: 'setor', depth: 2, children: [], status: 'todos', parent: parent.id };
+                    setoresMap.set(setorId, node);
+                    parent.children.push(node);
+                }
+                const setorNode = setoresMap.get(setorId);
+                setorNode.children.push({
+                    id: `armario-${armario.id}`,
+                    label: `Armário ${armario.numero}`,
+                    tipo: 'armario',
+                    depth: 3,
+                    status: armario.status,
+                    dados: armario,
+                    parent: setorNode.id,
+                    visitaEstendida: !!armario.visitaEstendida
+                });
+            });
+
+            return root;
+        }
+
+        function coletarNosVisiveis(node, visiveis = [], links = [], parent = null) {
+            visiveis.push(node);
+            if (parent) {
+                links.push({ source: parent, target: node });
             }
-            armariosParaExibir.forEach(armario => {
-                const card = document.createElement('div');
-                card.className = `armario-card ${armario.status}`;
-                card.dataset.id = armario.id;
-                if (armario.visitaEstendida) {
-                    card.classList.add('visita-estendida');
-                }
-                let detailsHTML = '';
-                if (armario.status === 'livre') {
-                    detailsHTML += '<p>Disponível para uso</p>';
-                } else {
-                    const termoHtml = armario.tipo === 'acompanhante'
-                        ? `<p><strong>Termo:</strong> ${formatarStatusTermo(armario.termoStatus)}</p>`
-                        : '';
-                    const dataRegistroFormatada = formatarDataComDiaSemana(armario.dataRegistro);
-                    const dataRegistroHtml = `<p><strong>Data:</strong> ${dataRegistroFormatada}</p>`;
-                    detailsHTML += `
-                        <p><strong>${armario.tipo === 'acompanhante' ? 'Acompanhante' : 'Visitante'}:</strong> ${armario.nomeVisitante}</p>
-                        <p><strong>Paciente:</strong> ${armario.nomePaciente}</p>
-                        <p><strong>Leito:</strong> ${armario.leito}</p>
-                        <p><strong>Volumes:</strong> ${armario.volumes}</p>
-                        ${armario.whatsapp ? `<p><strong>WhatsApp:</strong> ${armario.whatsapp}</p>` : ''}
-                        <p><strong>Início:</strong> ${armario.horaInicio}</p>
-                        ${armario.visitaEstendida
-                            ? '<p><strong>Visita:</strong> Estendida</p>'
-                            : (armario.horaPrevista ? `<p><strong>Previsão de saída:</strong> ${armario.horaPrevista}</p>` : '')}
-                        ${termoHtml}
-                        ${dataRegistroHtml}
-                    `;
-                }
-                const statusHtml = `
-                    <div class="armario-status status-${armario.status}">
-                        ${armario.status === 'livre' ? 'Livre' :
-                          armario.status === 'em-uso' ? 'Em uso' :
-                          armario.status === 'proximo' ? 'Próximo' : 'Vencido'}
-                    </div>
-                `;
-                const destaqueVisita = armario.visitaEstendida
-                    ? `<div class="armario-highlight"><span class="visita-estendida-tag"><i class="fas fa-infinity" aria-hidden="true"></i> Visita estendida</span></div>`
-                    : '';
-                card.innerHTML = `
-                    <div class="armario-header">
-                        <div class="armario-number">${armario.numero}</div>
-                        <div class="armario-header-right">
-                            ${destaqueVisita}
-                            ${statusHtml}
-                        </div>
-                    </div>
-                    <div class="armario-details">
-                        ${detailsHTML}
-                    </div>
-                `;
-                card.addEventListener('click', () => abrirModalArmario(armario));
-                elementos.armariosContainer.appendChild(card);
+            const colapsados = estado.grafo.colapsados || new Set();
+            if (colapsados.has(node.id)) {
+                return { visiveis, links };
+            }
+            (node.children || []).forEach(child => coletarNosVisiveis(child, visiveis, links, node));
+            return { visiveis, links };
+        }
+
+        function calcularLayout(nodes, links, dimensoes) {
+            const depthMap = new Map();
+            nodes.forEach(n => {
+                const depthCount = depthMap.get(n.depth) || 0;
+                depthMap.set(n.depth, depthCount + 1);
             });
+            const radiusStep = Math.min(dimensoes.width, dimensoes.height) / 6;
+            const nodesByDepth = new Map();
+            nodes.forEach(n => {
+                const list = nodesByDepth.get(n.depth) || [];
+                list.push(n);
+                nodesByDepth.set(n.depth, list);
+            });
+            nodesByDepth.forEach((list, depth) => {
+                const radius = depth === 0 ? 0 : radiusStep * depth;
+                list.forEach((node, index) => {
+                    const angle = (index / list.length) * Math.PI * 2 + (depth * 0.2);
+                    node.x = Math.cos(angle) * radius;
+                    node.y = Math.sin(angle) * radius;
+                });
+            });
+            const iterations = 40;
+            for (let i = 0; i < iterations; i++) {
+                nodes.forEach(n1 => {
+                    nodes.forEach(n2 => {
+                        if (n1 === n2) return;
+                        const dx = n1.x - n2.x;
+                        const dy = n1.y - n2.y;
+                        const distSq = Math.max(dx * dx + dy * dy, 0.01);
+                        const force = 220 / distSq;
+                        n1.x += (dx / Math.sqrt(distSq)) * force * 0.02;
+                        n1.y += (dy / Math.sqrt(distSq)) * force * 0.02;
+                    });
+                });
+                links.forEach(link => {
+                    const alvo = link.source;
+                    const destino = link.target;
+                    const dx = destino.x - alvo.x;
+                    const dy = destino.y - alvo.y;
+                    const distancia = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+                    const desejado = radiusStep * (1 + destino.depth * 0.15);
+                    const erro = distancia - desejado;
+                    const ajuste = erro * 0.08;
+                    const nx = (dx / distancia) * ajuste;
+                    const ny = (dy / distancia) * ajuste;
+                    destino.x -= nx;
+                    destino.y -= ny;
+                    alvo.x += nx;
+                    alvo.y += ny;
+                });
+            }
+            return { nodes, links };
+        }
+
+        function criarBadge(status, textoExtra = '') {
+            const span = document.createElement('span');
+            span.className = `node-badge badge-status-${status}`;
+            span.innerHTML = `<i class="fas fa-circle"></i> ${status.replace('-', ' ')} ${textoExtra}`.trim();
+            return span.outerHTML;
+        }
+
+        function atualizarPopover(node, posicao) {
+            if (!elementos.graphPopover) return;
+            const pop = elementos.graphPopover;
+            const dados = node.dados || {};
+            const statusBadge = criarBadge(node.status || 'todos', node.visitaEstendida ? '(visita estendida)' : '');
+            pop.innerHTML = `
+                <header>
+                    <div class="title"><i class="fas fa-cube"></i> ${node.label}</div>
+                    <span class="node-badge">${node.tipo}</span>
+                </header>
+                <div class="meta">
+                    <span><i class="fas fa-layer-group"></i> Unidade: ${dados.unidade || '—'}</span>
+                    <span><i class="fas fa-location-arrow"></i> Setor: ${dados.setor || '—'}</span>
+                    <span><i class="fas fa-hashtag"></i> Nº ${dados.numero || '—'}</span>
+                    <span>${statusBadge}</span>
+                </div>
+                <div class="actions">
+                    <button type="button" data-acao="foco">Focar</button>
+                    <button type="button" data-acao="colapso">${estado.grafo.colapsados.has(node.id) ? 'Expandir' : 'Colapsar'}</button>
+                    ${node.dados ? '<button type="button" data-acao="abrir">Detalhes</button>' : ''}
+                </div>
+            `;
+            pop.style.left = `${posicao.x}px`;
+            pop.style.top = `${posicao.y}px`;
+            pop.hidden = false;
+            estado.grafo.foco = node.id;
+        }
+
+        function limparPopover() {
+            if (elementos.graphPopover) {
+                elementos.graphPopover.hidden = true;
+            }
+        }
+
+        function aplicarTransformacaoGrafo() {
+            if (!elementos.graphGroup) return;
+            const { x, y, scale } = estado.grafo.transform;
+            elementos.graphGroup.setAttribute('transform', `translate(${x}, ${y}) scale(${scale})`);
+        }
+
+        function centralizarGrafo() {
+            if (!elementos.graphViewport) return;
+            const rect = elementos.graphViewport.getBoundingClientRect();
+            estado.grafo.transform.x = rect.width / 2;
+            estado.grafo.transform.y = rect.height / 2;
+            estado.grafo.transform.scale = 1;
+            aplicarTransformacaoGrafo();
+        }
+
+        function atualizarGrafoArmarios() {
+            if (!elementos.graphGroup || !elementos.graphStage || !elementos.graphViewport) return;
+            const root = construirHierarquiaArmarios(estado.armarios || []);
+            if (!root.children.length) {
+                elementos.graphGroup.innerHTML = '';
+                elementos.graphEmpty.hidden = false;
+                limparPopover();
+                return;
+            }
+            const { visiveis, links } = coletarNosVisiveis(root);
+            const viewportRect = elementos.graphViewport.getBoundingClientRect();
+            const layout = calcularLayout(visiveis, links, { width: viewportRect.width || 800, height: viewportRect.height || 600 });
+            elementos.graphGroup.innerHTML = '';
+            if (layout.nodes.length === 0) {
+                elementos.graphEmpty.hidden = false;
+                limparPopover();
+                return;
+            }
+            elementos.graphEmpty.hidden = true;
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            elementos.graphGroup.appendChild(defs);
+            layout.links.forEach(link => {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const c1x = link.source.x * 0.6 + link.target.x * 0.4;
+                const c1y = link.source.y * 0.6 + link.target.y * 0.4;
+                const c2x = link.source.x * 0.4 + link.target.x * 0.6;
+                const c2y = link.source.y * 0.4 + link.target.y * 0.6;
+                path.setAttribute('d', `M ${link.source.x} ${link.source.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${link.target.x} ${link.target.y}`);
+                path.setAttribute('class', `link link-status-${link.target.status || 'todos'}`);
+                elementos.graphGroup.appendChild(path);
+            });
+            layout.nodes.forEach(node => {
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('class', 'node');
+                group.setAttribute('tabindex', '0');
+                group.setAttribute('data-id', node.id);
+                group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+                const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                glow.setAttribute('class', 'glow');
+                glow.setAttribute('r', 28 - node.depth * 3);
+                glow.setAttribute('fill', node.tipo === 'armario' ? 'rgba(59,130,246,0.25)' : 'rgba(16,185,129,0.25)');
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', Math.max(12, 26 - node.depth * 3));
+                circle.setAttribute('fill', node.tipo === 'armario' ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.86)');
+                circle.setAttribute('stroke', estado.grafo.colapsados.has(node.id) ? 'var(--danger-color)' : 'rgba(255,255,255,0.8)');
+                circle.setAttribute('stroke-width', 1.6);
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.textContent = node.tipo === 'armario' ? (node.dados?.numero || node.label) : node.label;
+                text.setAttribute('font-size', node.tipo === 'armario' ? '10' : '11');
+                text.setAttribute('aria-hidden', 'true');
+                group.appendChild(glow);
+                group.appendChild(circle);
+                group.appendChild(text);
+                group.addEventListener('click', () => {
+                    if (node.tipo === 'armario' && node.dados) {
+                        atualizarPopover(node, converterParaViewport(node.x, node.y));
+                    } else {
+                        alternarColapsoNo(node.id);
+                    }
+                });
+                group.addEventListener('focus', () => atualizarPopover(node, converterParaViewport(node.x, node.y)));
+                group.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        alternarColapsoNo(node.id);
+                    }
+                });
+                elementos.graphGroup.appendChild(group);
+            });
+            aplicarTransformacaoGrafo();
+        }
+
+        function converterParaViewport(x, y) {
+            const rect = elementos.graphViewport.getBoundingClientRect();
+            const { scale, x: tx, y: ty } = estado.grafo.transform;
+            return { x: x * scale + tx + rect.left, y: y * scale + ty + rect.top };
+        }
+
+        function alternarColapsoNo(id) {
+            if (!estado.grafo.colapsados) {
+                estado.grafo.colapsados = new Set();
+            }
+            if (estado.grafo.colapsados.has(id)) {
+                estado.grafo.colapsados.delete(id);
+            } else {
+                estado.grafo.colapsados.add(id);
+            }
+            atualizarGrafoArmarios();
+        }
+
+        function ajustarZoom(fator) {
+            const limiteMin = 0.5;
+            const limiteMax = 2.5;
+            estado.grafo.transform.scale = Math.min(limiteMax, Math.max(limiteMin, estado.grafo.transform.scale * fator));
+            aplicarTransformacaoGrafo();
+        }
+
+        function configurarPanZoom() {
+            if (!elementos.graphViewport) return;
+            const panState = { ativo: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+            elementos.graphViewport.addEventListener('pointerdown', event => {
+                panState.ativo = true;
+                panState.startX = event.clientX;
+                panState.startY = event.clientY;
+                panState.originX = estado.grafo.transform.x;
+                panState.originY = estado.grafo.transform.y;
+                elementos.graphViewport.setPointerCapture(event.pointerId);
+            });
+            elementos.graphViewport.addEventListener('pointermove', event => {
+                if (!panState.ativo) return;
+                const dx = event.clientX - panState.startX;
+                const dy = event.clientY - panState.startY;
+                estado.grafo.transform.x = panState.originX + dx;
+                estado.grafo.transform.y = panState.originY + dy;
+                aplicarTransformacaoGrafo();
+                limparPopover();
+            });
+            elementos.graphViewport.addEventListener('pointerup', () => { panState.ativo = false; });
+            elementos.graphViewport.addEventListener('pointercancel', () => { panState.ativo = false; });
+            elementos.graphViewport.addEventListener('wheel', event => {
+                event.preventDefault();
+                const fator = event.deltaY < 0 ? 1.05 : 0.95;
+                ajustarZoom(fator);
+            }, { passive: false });
+            centralizarGrafo();
         }
 
         function atualizarResumoDashboardLocal() {
