@@ -424,6 +424,7 @@
       const btnSave = document.getElementById("btnSave");
 
       let mapState = { nodes: [], rootId: null };
+      let nodeElements = new Map();
       let selectedId = null;
       let isDraggingNode = false;
       let dragOffset = { x: 0, y: 0 };
@@ -437,39 +438,65 @@
 
       function defaultMap() {
         const rootId = crypto.randomUUID();
+        const salas = [
+          {
+            title: "Recepção",
+            description: "Acolhimento e registros",
+            color: "#38bdf8",
+          },
+          {
+            title: "Triagem",
+            description: "Avaliação inicial de pacientes",
+            color: "#c084fc",
+          },
+          {
+            title: "Sala Amarela",
+            description: "Cuidados intermediários",
+            color: "#f59e0b",
+          },
+          {
+            title: "Sala Vermelha",
+            description: "Emergências críticas",
+            color: "#ef4444",
+          },
+          {
+            title: "Centro Cirúrgico",
+            description: "Procedimentos cirúrgicos",
+            color: "#22c55e",
+          },
+          {
+            title: "UTI",
+            description: "Cuidados intensivos",
+            color: "#3b82f6",
+          },
+        ];
+
+        const spacing = 140;
+        const offsetY = -((salas.length - 1) * spacing) / 2;
+
         return {
           rootId,
           nodes: [
             {
               id: rootId,
               parentId: null,
-              title: "Hospital",
-              description: "Mapa mental das salas e equipes",
-              tags: ["dashboard", "sala"],
+              title: "Hospital Estadual",
+              description: "Mapa mental das salas cadastradas",
+              tags: ["hospital", "dashboard"],
               collapsed: false,
               position: { x: 0, y: 0 },
               color: "#60a5fa",
             },
-            {
+            ...salas.map((sala, idx) => ({
               id: crypto.randomUUID(),
               parentId: rootId,
-              title: "Sala 1",
-              description: "Procedimentos gerais",
-              tags: ["geral"],
+              title: sala.title,
+              description: sala.description,
+              tags: ["sala"],
               collapsed: false,
-              position: { x: 240, y: -80 },
-              color: "#a855f7",
-            },
-            {
-              id: crypto.randomUUID(),
-              parentId: rootId,
-              title: "Sala 2",
-              description: "Urgência",
-              tags: ["urgência"],
-              collapsed: false,
-              position: { x: 240, y: 120 },
-              color: "#22c55e",
-            },
+              position: { x: 260, y: offsetY + idx * spacing },
+              color: sala.color,
+            })),
           ],
         };
       }
@@ -532,6 +559,7 @@
       function render() {
         mapInner.innerHTML = "";
         edgeLayer.innerHTML = "";
+        nodeElements = new Map();
         const visible = new Set();
 
         const mapById = new Map(mapState.nodes.map((n) => [n.id, n]));
@@ -550,9 +578,11 @@
           visible.add(node.id);
           const el = document.createElement("div");
           el.className = "node" + (node.id === selectedId ? " selected" : "");
+          el.dataset.nodeId = node.id;
           el.style.left = `${node.position.x}px`;
           el.style.top = `${node.position.y}px`;
           el.style.borderColor = node.color || "var(--border)";
+          nodeElements.set(node.id, el);
 
           const title = document.createElement("div");
           title.className = "node-title";
@@ -659,8 +689,16 @@
           const parent = nodes.get(node.parentId);
           if (!parent || parent.collapsed) return;
           const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          const start = { x: parent.position.x + 150, y: parent.position.y + 40 };
-          const end = { x: node.position.x, y: node.position.y + 20 };
+          const parentEl = nodeElements.get(parent.id);
+          const nodeEl = nodeElements.get(node.id);
+          const parentWidth = parentEl?.offsetWidth || 170;
+          const parentHeight = parentEl?.offsetHeight || 80;
+          const nodeHeight = nodeEl?.offsetHeight || 80;
+          const start = {
+            x: parent.position.x + parentWidth,
+            y: parent.position.y + parentHeight / 2,
+          };
+          const end = { x: node.position.x, y: node.position.y + nodeHeight / 2 };
           const dx = (end.x - start.x) / 2;
           const d = `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
           path.setAttribute("d", d);

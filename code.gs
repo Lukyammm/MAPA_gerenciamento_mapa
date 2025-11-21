@@ -27,19 +27,65 @@ function ensureMapaSheet() {
 
 function defaultMapData() {
   const rootId = Utilities.getUuid();
+  const salas = [
+    {
+      title: 'Recepção',
+      description: 'Acolhimento e registros',
+      color: '#38bdf8',
+    },
+    {
+      title: 'Triagem',
+      description: 'Avaliação inicial de pacientes',
+      color: '#c084fc',
+    },
+    {
+      title: 'Sala Amarela',
+      description: 'Cuidados intermediários',
+      color: '#f59e0b',
+    },
+    {
+      title: 'Sala Vermelha',
+      description: 'Emergências críticas',
+      color: '#ef4444',
+    },
+    {
+      title: 'Centro Cirúrgico',
+      description: 'Procedimentos cirúrgicos',
+      color: '#22c55e',
+    },
+    {
+      title: 'UTI',
+      description: 'Cuidados intensivos',
+      color: '#3b82f6',
+    },
+  ];
+
+  const spacing = 140;
+  const offsetY = -((salas.length - 1) * spacing) / 2;
+
   return {
     rootId: rootId,
     nodes: [
       {
         id: rootId,
         parentId: null,
-        title: 'Hospital',
-        description: 'Mapa mental das salas e equipes',
-        tags: ['dashboard', 'sala'],
+        title: 'Hospital Estadual',
+        description: 'Mapa mental das salas cadastradas',
+        tags: ['hospital', 'dashboard'],
         collapsed: false,
         position: { x: 0, y: 0 },
         color: '#60a5fa',
       },
+      ...salas.map((sala, idx) => ({
+        id: Utilities.getUuid(),
+        parentId: rootId,
+        title: sala.title,
+        description: sala.description,
+        tags: ['sala'],
+        collapsed: false,
+        position: { x: 260, y: offsetY + idx * spacing },
+        color: sala.color,
+      })),
     ],
   };
 }
