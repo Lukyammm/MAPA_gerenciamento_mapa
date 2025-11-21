@@ -6,18 +6,19 @@
     <base target="_top" />
     <style>
       :root {
-        --bg: #0f172a;
-        --panel: #0b1224;
-        --surface: #111a33;
-        --border: #1f2a44;
-        --muted: #8ca0c5;
-        --text: #e5edff;
-        --primary: #60a5fa;
+        --bg: #0c0f17;
+        --panel: #0f1524;
+        --surface: #141c2e;
+        --border: #1f2940;
+        --muted: #8a9bb8;
+        --text: #e8edf7;
+        --primary: #4f8bff;
         --primary-strong: #1d4ed8;
-        --accent: #a855f7;
-        --success: #22c55e;
-        --danger: #ef4444;
-        --shadow: 0 16px 40px rgba(0, 0, 0, 0.36);
+        --accent: #b07bff;
+        --success: #32d583;
+        --danger: #ef5b5b;
+        --warning: #f8b84a;
+        --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
       }
 
       * {
@@ -28,8 +29,8 @@
         margin: 0;
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
           "Segoe UI", sans-serif;
-        background: radial-gradient(circle at 10% 10%, #1a2642 0, #0b1020 50%),
-          linear-gradient(180deg, #0b1224 0%, #0b0f1b 100%);
+        background: radial-gradient(circle at 30% 10%, #14203a 0, #090d16 50%),
+          linear-gradient(180deg, #0c0f17 0%, #0b0f1c 60%);
         color: var(--text);
         min-height: 100vh;
         overflow: hidden;
@@ -45,23 +46,23 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 16px 20px 8px;
+        padding: 16px 20px 10px;
       }
 
       .badge {
         padding: 6px 10px;
         border-radius: 999px;
-        background: linear-gradient(120deg, #1d4ed8, #9333ea);
+        background: linear-gradient(120deg, #1e2a44, #14294b);
         font-size: 0.78rem;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: #f8fbff;
-        box-shadow: var(--shadow);
+        color: #f1f5ff;
+        border: 1px solid var(--border);
       }
 
       h1 {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         letter-spacing: 0.01em;
       }
@@ -71,21 +72,24 @@
         align-items: center;
         gap: 10px;
         padding: 10px 20px 12px;
-        background: rgba(15, 23, 42, 0.7);
+        background: rgba(12, 15, 23, 0.85);
         backdrop-filter: blur(12px);
         border-top: 1px solid rgba(255, 255, 255, 0.04);
         border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03),
           inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        flex-wrap: wrap;
       }
 
       .toolbar button,
       .toolbar .chip,
-      .toolbar .status {
+      .toolbar .status,
+      .toolbar .file-label,
+      .toolbar select {
         border: 1px solid var(--border);
-        background: linear-gradient(140deg, #111a33, #0c1328);
+        background: linear-gradient(140deg, #151c2c, #0f1628);
         color: var(--text);
-        border-radius: 12px;
+        border-radius: 10px;
         padding: 8px 12px;
         font-size: 0.9rem;
         cursor: pointer;
@@ -97,10 +101,12 @@
         box-shadow: var(--shadow);
       }
 
-      .toolbar button:hover {
+      .toolbar button:hover,
+      .toolbar .file-label:hover,
+      .toolbar select:hover {
         transform: translateY(-1px);
         border-color: var(--primary);
-        box-shadow: 0 10px 20px rgba(96, 165, 250, 0.25);
+        box-shadow: 0 10px 20px rgba(79, 139, 255, 0.25);
       }
 
       .toolbar button:disabled {
@@ -114,6 +120,11 @@
         box-shadow: none;
       }
 
+      .toolbar select {
+        appearance: none;
+        padding-right: 28px;
+      }
+
       .status-dot {
         width: 9px;
         height: 9px;
@@ -123,7 +134,37 @@
       }
 
       .status.unsaved .status-dot {
-        background: var(--danger);
+        background: var(--warning);
+      }
+
+      .status.saving .status-dot {
+        background: var(--primary);
+      }
+
+      .save-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 3px;
+        background: linear-gradient(90deg, rgba(79, 139, 255, 0.5), transparent);
+        transform-origin: left;
+        scale: 0;
+        transition: scale 0.25s ease;
+      }
+
+      .save-bar.active {
+        scale: 1;
+        animation: progress 1.4s linear infinite;
+      }
+
+      @keyframes progress {
+        from {
+          transform: translateX(-20%);
+        }
+        to {
+          transform: translateX(20%);
+        }
       }
 
       .viewport {
@@ -132,12 +173,8 @@
         margin: 14px 14px 20px;
         border-radius: 18px;
         overflow: hidden;
-        background: radial-gradient(circle at 40% 20%, rgba(96, 165, 250, 0.12),
-            transparent 40%),
-          radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.1), transparent
-              35%),
-          linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(9, 10, 16, 0.95)
-              100%);
+        background: linear-gradient(180deg, rgba(12, 17, 28, 0.92) 0%,
+            rgba(7, 9, 17, 0.98) 100%);
         border: 1px solid rgba(255, 255, 255, 0.04);
         box-shadow: var(--shadow);
       }
@@ -147,15 +184,21 @@
         inset: 0;
         background-image: linear-gradient(
             to right,
-            rgba(255, 255, 255, 0.03) 1px,
+            rgba(255, 255, 255, 0.025) 1px,
             transparent 1px
           ),
           linear-gradient(
             to bottom,
-            rgba(255, 255, 255, 0.03) 1px,
+            rgba(255, 255, 255, 0.025) 1px,
             transparent 1px
           );
-        background-size: 48px 48px;
+        background-size: 56px 56px;
+        pointer-events: none;
+      }
+
+      #guides {
+        position: absolute;
+        inset: 0;
         pointer-events: none;
       }
 
@@ -181,11 +224,11 @@
 
       .node {
         position: absolute;
-        min-width: 170px;
-        background: linear-gradient(145deg, #122142, #0e1530);
+        min-width: 180px;
+        background: linear-gradient(150deg, #18223a, #10182b);
         border: 1px solid var(--border);
         border-radius: 14px;
-        padding: 12px 14px;
+        padding: 12px 14px 10px;
         box-shadow: var(--shadow);
         color: var(--text);
         display: flex;
@@ -193,28 +236,35 @@
         gap: 6px;
         cursor: grab;
         transition: transform 0.12s ease, box-shadow 0.12s ease,
-          border-color 0.2s ease;
+          border-color 0.2s ease, background 0.2s ease;
       }
 
       .node:focus-within,
       .node.selected {
         border-color: var(--primary);
-        box-shadow: 0 16px 30px rgba(96, 165, 250, 0.35);
+        box-shadow: 0 16px 32px rgba(79, 139, 255, 0.35);
         transform: translateY(-1px);
+        background: linear-gradient(150deg, #1c2740, #111a30);
+      }
+
+      .node.dragging {
+        opacity: 0.95;
+        box-shadow: 0 18px 40px rgba(79, 139, 255, 0.25);
       }
 
       .node-title {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         font-weight: 700;
         outline: none;
       }
 
       .node-meta {
-        font-size: 0.82rem;
+        font-size: 0.84rem;
         color: var(--muted);
         display: flex;
         align-items: center;
         gap: 8px;
+        outline: none;
       }
 
       .node-tags {
@@ -227,8 +277,8 @@
         padding: 3px 7px;
         border-radius: 999px;
         font-size: 0.75rem;
-        background: rgba(96, 165, 250, 0.12);
-        border: 1px solid rgba(96, 165, 250, 0.3);
+        background: rgba(79, 139, 255, 0.1);
+        border: 1px solid rgba(79, 139, 255, 0.3);
       }
 
       .node-actions {
@@ -242,7 +292,7 @@
         background: rgba(255, 255, 255, 0.04);
         color: var(--text);
         border-radius: 8px;
-        padding: 3px 6px;
+        padding: 4px 7px;
         font-size: 0.75rem;
         cursor: pointer;
         transition: opacity 0.15s ease, border-color 0.2s ease;
@@ -268,13 +318,13 @@
         right: 16px;
         padding: 12px 14px;
         border-radius: 12px;
-        background: rgba(11, 17, 30, 0.9);
+        background: rgba(15, 21, 35, 0.9);
         border: 1px solid rgba(255, 255, 255, 0.06);
         backdrop-filter: blur(8px);
         box-shadow: var(--shadow);
         display: grid;
         gap: 6px;
-        min-width: 260px;
+        min-width: 270px;
       }
 
       .floating-card h3 {
@@ -312,22 +362,116 @@
         transform: translateY(0);
       }
 
-      .sync-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--success);
-        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.15);
+      .mini-toolbar {
+        position: absolute;
+        display: flex;
+        gap: 6px;
+        padding: 6px 8px;
+        background: rgba(20, 26, 42, 0.92);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: var(--shadow);
+        pointer-events: auto;
       }
 
-      .sync-dot.pending {
-        background: var(--danger);
-        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);
+      .mini-toolbar button {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 6px;
+        cursor: pointer;
       }
 
-      @media (max-width: 860px) {
-        .toolbar {
-          flex-wrap: wrap;
+      .guide-line {
+        position: absolute;
+        background: rgba(79, 139, 255, 0.4);
+        pointer-events: none;
+      }
+
+      .guide-line.vertical {
+        width: 1px;
+        height: 100%;
+      }
+
+      .guide-line.horizontal {
+        height: 1px;
+        width: 100%;
+      }
+
+      .minimap {
+        position: absolute;
+        bottom: 14px;
+        left: 14px;
+        width: 220px;
+        height: 150px;
+        background: rgba(10, 13, 21, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 8px;
+        backdrop-filter: blur(8px);
+      }
+
+      .minimap canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .history {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .history span {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .save-progress {
+        width: 120px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .save-progress span {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        transform-origin: left;
+        transform: scaleX(0);
+        transition: transform 0.25s ease;
+      }
+
+      .save-progress.active span {
+        transform: scaleX(1);
+        animation: pulse 1.2s ease infinite alternate;
+      }
+
+      @keyframes pulse {
+        from {
+          opacity: 0.6;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 960px) {
+        .floating-card {
+          display: none;
+        }
+        .minimap {
+          display: none;
         }
         .node {
           min-width: 150px;
@@ -336,50 +480,70 @@
     </style>
   </head>
   <body>
-    <div class="app">
+    <div class="app" aria-label="Mapa mental" role="application">
       <header>
-        <span class="badge">Mapa Mental</span>
+        <span class="badge" aria-hidden="true">Mapa Mental</span>
         <div>
           <h1>Salas e Equipes (Sheets)</h1>
           <div style="color: var(--muted); font-size: 0.9rem;">
-            Arraste, edite, conecte e sincronize com a planilha em tempo real.
+            Navegação por mouse e teclado com salvamento em tempo real.
           </div>
         </div>
       </header>
 
       <div class="toolbar">
-        <button id="btnAddChild">➕ Filho (Enter)</button>
-        <button id="btnAddSibling">➕ Irmão (Shift+Enter)</button>
-        <button id="btnDelete">🗑️ Remover (Del)</button>
-        <button id="btnOrganize">🧭 Auto-organizar</button>
-        <button id="btnCollapse">⤵️ Expandir/Colapsar</button>
-        <button id="btnUndo">↩️ Undo</button>
-        <button id="btnRedo">↪️ Redo</button>
-        <button id="btnSave">💾 Salvar (Ctrl/Cmd+S)</button>
-        <span class="status" id="syncStatus">
+        <button id="btnAddChild" aria-label="Adicionar filho">➕ Filho (Shift+Enter)</button>
+        <button id="btnAddSibling" aria-label="Adicionar irmão">➕ Irmão</button>
+        <button id="btnDelete" aria-label="Remover nó selecionado">🗑️ Remover (Del)</button>
+        <button id="btnOrganize" aria-label="Auto organizar">🧭 Auto-organizar</button>
+        <button id="btnCollapse" aria-label="Expandir ou colapsar">⤵️ Expandir/Colapsar</button>
+        <button id="btnUndo" aria-label="Desfazer">↩️ Undo</button>
+        <button id="btnRedo" aria-label="Refazer">↪️ Redo</button>
+        <button id="btnSave" aria-label="Salvar manual">💾 Salvar (Ctrl/Cmd+S)</button>
+        <button id="btnExport" aria-label="Exportar JSON">⬇️ Exportar</button>
+        <label class="file-label" for="fileImport">⬆️ Importar</label>
+        <input id="fileImport" type="file" accept="application/json" style="display:none" />
+        <select id="versionSelector" aria-label="Versões salvas"></select>
+        <span class="status" id="syncStatus" role="status" aria-live="polite">
           <span class="status-dot"></span> <strong>Sincronizado</strong>
         </span>
+        <div class="save-progress" aria-label="Estado de gravação">
+          <span id="saveProgressBar"></span>
+        </div>
       </div>
 
-      <div class="viewport" id="viewport">
-        <div class="grid"></div>
-        <div class="map-wrapper" id="mapWrapper">
+      <div class="viewport" id="viewport" role="presentation">
+        <div class="save-bar" id="saveBar"></div>
+        <div class="grid" aria-hidden="true"></div>
+        <div id="guides"></div>
+        <div class="map-wrapper" id="mapWrapper" aria-label="Área do mapa">
           <svg class="edges" id="edgeLayer" xmlns="http://www.w3.org/2000/svg"></svg>
-          <div class="map-inner" id="mapInner"></div>
+          <div class="map-inner" id="mapInner" aria-live="polite"></div>
         </div>
-        <div class="floating-card">
+        <div class="floating-card" aria-label="Ajuda e histórico">
           <h3>Atalhos</h3>
-          <div class="key-row"><span>Enter</span><span>Novo filho</span></div>
-          <div class="key-row"><span>Shift + Enter</span><span>Novo irmão</span></div>
+          <div class="key-row"><span>Setas</span><span>Navegar entre nós</span></div>
+          <div class="key-row"><span>Enter</span><span>Editar nó</span></div>
+          <div class="key-row"><span>Shift + Enter</span><span>Novo filho</span></div>
           <div class="key-row"><span>Delete</span><span>Remover nó</span></div>
           <div class="key-row"><span>Ctrl/Cmd + S</span><span>Salvar</span></div>
           <div class="key-row"><span>Ctrl/Cmd + Z / Y</span><span>Undo/Redo</span></div>
-          <small>Arraste o fundo para mover o mapa. Scroll para zoom.</small>
+          <small>Arraste fundo para mover, scroll com foco no cursor para zoom.</small>
+          <div class="history" id="historyList"></div>
+        </div>
+        <div class="minimap" aria-label="Minimapa" title="Clique para reposicionar" role="button">
+          <canvas id="minimapCanvas" width="220" height="150"></canvas>
         </div>
       </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="mini-toolbar" id="miniToolbar" aria-label="Ações rápidas" hidden>
+      <button id="miniAddChild" aria-label="Adicionar filho">＋</button>
+      <button id="miniAddSibling" aria-label="Adicionar irmão">⧉</button>
+      <button id="miniDelete" aria-label="Excluir nó">🗑️</button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
       const mapInner = document.getElementById("mapInner");
@@ -388,6 +552,12 @@
       const mapWrapper = document.getElementById("mapWrapper");
       const toast = document.getElementById("toast");
       const syncStatus = document.getElementById("syncStatus");
+      const saveBar = document.getElementById("saveBar");
+      const saveProgressBar = document.getElementById("saveProgressBar");
+      const guidesContainer = document.getElementById("guides");
+      const minimapCanvas = document.getElementById("minimapCanvas");
+      const miniToolbar = document.getElementById("miniToolbar");
+      const historyList = document.getElementById("historyList");
 
       const btnAddChild = document.getElementById("btnAddChild");
       const btnAddSibling = document.getElementById("btnAddSibling");
@@ -397,19 +567,30 @@
       const btnUndo = document.getElementById("btnUndo");
       const btnRedo = document.getElementById("btnRedo");
       const btnSave = document.getElementById("btnSave");
+      const btnExport = document.getElementById("btnExport");
+      const fileImport = document.getElementById("fileImport");
+      const versionSelector = document.getElementById("versionSelector");
+      const miniAddChild = document.getElementById("miniAddChild");
+      const miniAddSibling = document.getElementById("miniAddSibling");
+      const miniDelete = document.getElementById("miniDelete");
+
+      const MAX_TITLE = 80;
+      const MAX_DESCRIPTION = 200;
 
       let mapState = { nodes: [], rootId: null };
       let nodeElements = new Map();
       let selectedId = null;
       let isDraggingNode = false;
       let dragOffset = { x: 0, y: 0 };
-      let panState = { x: 200, y: 120, scale: 1 };
+      let panState = { x: 200, y: 120, scale: 1, targetScale: 1 };
       let isPanning = false;
       let panStart = { x: 0, y: 0 };
       const undoStack = [];
       const redoStack = [];
+      let historyLog = [];
       let savePending = false;
       let saveTimer = null;
+      let saveInFlight = false;
 
       function defaultMap() {
         const rootId = crypto.randomUUID();
@@ -482,23 +663,41 @@
         setTimeout(() => toast.classList.remove("show"), 2200);
       }
 
-      function setStatus(unsaved) {
+      function setStatus(unsaved, saving = false) {
         savePending = unsaved;
+        saveInFlight = saving;
         const dot = syncStatus.querySelector(".status-dot");
         const label = syncStatus.querySelector("strong");
-        if (unsaved) {
-          dot.classList.add("unsaved");
+        syncStatus.classList.toggle("unsaved", unsaved && !saving);
+        syncStatus.classList.toggle("saving", saving);
+        document.querySelector(".save-progress").classList.toggle("active", unsaved || saving);
+        saveBar.classList.toggle("active", saving);
+        saveProgressBar.parentElement.classList.toggle("active", saving);
+        if (saving) {
+          dot.style.boxShadow = "0 0 0 6px rgba(79,139,255,0.15)";
+          label.textContent = "Salvando...";
+        } else if (unsaved) {
+          dot.style.boxShadow = "0 0 0 6px rgba(248,184,74,0.15)";
           label.textContent = "Alterações pendentes";
         } else {
-          dot.classList.remove("unsaved");
+          dot.style.boxShadow = "0 0 0 6px rgba(50,213,131,0.15)";
           label.textContent = "Sincronizado";
         }
       }
 
-      function pushHistory() {
+      function pushHistory(label = "alteração") {
         undoStack.push(JSON.stringify(mapState));
-        if (undoStack.length > 40) undoStack.shift();
+        historyLog.unshift(`${new Date().toLocaleTimeString()} · ${label}`);
+        if (undoStack.length > 60) undoStack.shift();
+        if (historyLog.length > 10) historyLog.pop();
         redoStack.length = 0;
+        renderHistory();
+      }
+
+      function renderHistory() {
+        historyList.innerHTML = historyLog
+          .map((item) => `<span>${item}</span>`)
+          .join("");
       }
 
       function loadFromServer() {
@@ -507,34 +706,82 @@
             .withSuccessHandler((data) => {
               mapState = data && data.nodes ? data : defaultMap();
               render();
+              setStatus(false, false);
+              loadVersions();
             })
             .withFailureHandler(() => {
               mapState = defaultMap();
               render();
+              setStatus(false, false);
+              loadVersions();
             })
             .getMap();
         } else {
           mapState = defaultMap();
           render();
+          setStatus(false, false);
+          loadVersions();
         }
       }
 
+      function persistVersion() {
+        const versions = JSON.parse(localStorage.getItem("mapVersions") || "[]");
+        versions.unshift({
+          savedAt: new Date().toISOString(),
+          data: mapState,
+        });
+        if (versions.length > 8) versions.pop();
+        localStorage.setItem("mapVersions", JSON.stringify(versions));
+        loadVersions();
+      }
+
+      function loadVersions() {
+        const versions = JSON.parse(localStorage.getItem("mapVersions") || "[]");
+        versionSelector.innerHTML = "";
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Versões locais";
+        versionSelector.appendChild(opt);
+        versions.forEach((v, idx) => {
+          const option = document.createElement("option");
+          const date = new Date(v.savedAt);
+          option.value = idx;
+          option.textContent = `${idx + 1} • ${date.toLocaleString()}`;
+          versionSelector.appendChild(option);
+        });
+      }
+
       function saveToServer(debounced = true) {
-        setStatus(true);
+        setStatus(true, true);
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
           if (typeof google !== "undefined" && google.script) {
             google.script.run
               .withSuccessHandler(() => {
-                setStatus(false);
+                setStatus(false, false);
                 showToast("Mapa salvo na planilha");
+                persistVersion();
               })
               .withFailureHandler(() => showToast("Falha ao salvar"))
               .setMap(mapState);
           } else {
-            setStatus(false);
+            setStatus(false, false);
+            persistVersion();
           }
-        }, debounced ? 600 : 0);
+        }, debounced ? 350 : 0);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function validateText(value, max, fallback) {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return fallback;
+        if (trimmed.length > max) {
+          showToast(`Limite de ${max} caracteres aplicado.`);
+        }
+        return trimmed.slice(0, max);
       }
 
       function render() {
@@ -563,15 +810,19 @@
           el.style.left = `${node.position.x}px`;
           el.style.top = `${node.position.y}px`;
           el.style.borderColor = node.color || "var(--border)";
+          el.setAttribute("role", "group");
+          el.setAttribute("aria-label", `${node.title}`);
           nodeElements.set(node.id, el);
 
           const title = document.createElement("div");
           title.className = "node-title";
           title.contentEditable = "true";
           title.textContent = node.title;
+          title.setAttribute("role", "textbox");
+          title.setAttribute("aria-label", "Título do nó");
           title.addEventListener("input", () => {
-            node.title = title.textContent.trim() || "(sem nome)";
-            setStatus(true);
+            node.title = validateText(title.textContent, MAX_TITLE, "(sem nome)");
+            setStatus(true, true);
             saveToServer();
           });
 
@@ -579,9 +830,11 @@
           meta.className = "node-meta";
           meta.textContent = node.description || "Sem descrição";
           meta.contentEditable = "true";
+          meta.setAttribute("role", "textbox");
+          meta.setAttribute("aria-label", "Descrição do nó");
           meta.addEventListener("input", () => {
-            node.description = meta.textContent.trim();
-            setStatus(true);
+            node.description = validateText(meta.textContent, MAX_DESCRIPTION, "Sem descrição");
+            setStatus(true, true);
             saveToServer();
           });
 
@@ -602,6 +855,7 @@
           toggle.addEventListener("click", (e) => {
             e.stopPropagation();
             node.collapsed = !node.collapsed;
+            pushHistory("alternar colapso");
             render();
             saveToServer();
           });
@@ -622,26 +876,32 @@
           el.addEventListener("pointerdown", (e) => {
             if (e.button !== 0) return;
             isDraggingNode = true;
+            el.classList.add("dragging");
             selectedId = node.id;
             dragOffset = { x: e.clientX - node.position.x, y: e.clientY - node.position.y };
             el.setPointerCapture(e.pointerId);
+            showMiniToolbar(el);
           });
 
           el.addEventListener("pointermove", (e) => {
             if (!isDraggingNode || selectedId !== node.id) return;
             const x = (e.clientX - dragOffset.x) / panState.scale;
             const y = (e.clientY - dragOffset.y) / panState.scale;
-            node.position = { x, y };
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
+            const { snappedX, snappedY } = applyAlignment(x, y, node.id);
+            node.position = { x: snappedX, y: snappedY };
+            el.style.left = `${snappedX}px`;
+            el.style.top = `${snappedY}px`;
             drawEdges();
-            setStatus(true);
+            setStatus(true, true);
           });
 
           el.addEventListener("pointerup", (e) => {
             if (isDraggingNode) {
               el.releasePointerCapture(e.pointerId);
               isDraggingNode = false;
+              el.classList.remove("dragging");
+              clearGuides();
+              spreadSiblings(node);
               saveToServer();
             }
           });
@@ -656,6 +916,8 @@
         });
 
         drawEdges();
+        showMiniToolbar(nodeElements.get(selectedId));
+        drawMinimap();
       }
 
       function drawEdges() {
@@ -684,18 +946,22 @@
           const d = `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
           path.setAttribute("d", d);
           path.setAttribute("fill", "none");
-          path.setAttribute("stroke", "rgba(96,165,250,0.7)");
+          path.setAttribute("stroke", "rgba(79,139,255,0.7)");
           path.setAttribute("stroke-width", "2.5");
           path.setAttribute("stroke-linecap", "round");
           edgeLayer.appendChild(path);
         });
+        applyTransform();
+      }
+
+      function applyTransform() {
         mapInner.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${panState.scale})`;
         edgeLayer.style.transform = mapInner.style.transform;
       }
 
-      function addNode(parentId) {
+      function addNode(parentId, label = "novo nó") {
         if (!parentId) parentId = mapState.rootId;
-        pushHistory();
+        pushHistory(label);
         const newNode = {
           id: crypto.randomUUID(),
           parentId,
@@ -704,7 +970,7 @@
           tags: [],
           collapsed: false,
           position: { x: Math.random() * 160 + 80, y: Math.random() * 120 - 60 },
-          color: "#60a5fa",
+          color: "#4f8bff",
         };
         mapState.nodes.push(newNode);
         selectedId = newNode.id;
@@ -714,7 +980,7 @@
 
       function deleteNode(nodeId) {
         if (!nodeId) return;
-        pushHistory();
+        pushHistory("excluir");
         const toDelete = new Set([nodeId]);
         let changed = true;
         while (changed) {
@@ -733,7 +999,7 @@
       }
 
       function autoLayout() {
-        pushHistory();
+        pushHistory("auto organizar");
         const nodes = mapState.nodes;
         const levels = {};
         const root = nodes.find((n) => !n.parentId || n.id === mapState.rootId);
@@ -766,7 +1032,7 @@
       function toggleCollapse() {
         const node = mapState.nodes.find((n) => n.id === selectedId);
         if (!node) return;
-        pushHistory();
+        pushHistory("colapsar/expandir");
         node.collapsed = !node.collapsed;
         render();
         saveToServer();
@@ -774,13 +1040,13 @@
 
       function addChildShortcut() {
         const target = selectedId || mapState.rootId;
-        addNode(target);
+        addNode(target, "novo filho");
       }
 
       function addSiblingShortcut() {
         const node = mapState.nodes.find((n) => n.id === selectedId);
         const parent = node ? node.parentId : mapState.rootId;
-        addNode(parent);
+        addNode(parent, "novo irmão");
       }
 
       function handleUndo() {
@@ -824,21 +1090,37 @@
 
         viewport.addEventListener("wheel", (e) => {
           e.preventDefault();
-          const delta = -e.deltaY * 0.001;
-          const newScale = Math.min(Math.max(panState.scale + delta, 0.4), 2.5);
-          panState.scale = newScale;
+          const rect = viewport.getBoundingClientRect();
+          const cursorX = (e.clientX - rect.left - panState.x) / panState.scale;
+          const cursorY = (e.clientY - rect.top - panState.y) / panState.scale;
+          const deltaScale = -e.deltaY * 0.0012;
+          const desired = clamp(panState.scale + deltaScale, 0.6, 2.4);
+          panState.scale = panState.scale + (desired - panState.scale) * 0.35;
+          panState.targetScale = desired;
+          panState.x = e.clientX - rect.left - cursorX * panState.scale;
+          panState.y = e.clientY - rect.top - cursorY * panState.scale;
           drawEdges();
         });
+
+        function animateZoom() {
+          if (Math.abs(panState.targetScale - panState.scale) > 0.001) {
+            panState.scale = panState.scale + (panState.targetScale - panState.scale) * 0.18;
+            drawEdges();
+          }
+          requestAnimationFrame(animateZoom);
+        }
+
+        animateZoom();
       }
 
       function setupHotkeys() {
         document.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
+          if (e.key === "Enter" && e.shiftKey) {
             e.preventDefault();
             addChildShortcut();
-          } else if (e.key === "Enter" && e.shiftKey) {
+          } else if (e.key === "Enter") {
             e.preventDefault();
-            addSiblingShortcut();
+            focusSelectedForEdit();
           } else if (e.key === "Delete") {
             e.preventDefault();
             deleteNode(selectedId);
@@ -851,8 +1133,21 @@
           } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
             e.preventDefault();
             handleRedo();
+          } else if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+            e.preventDefault();
+            navigateNodes(e.key);
           }
         });
+      }
+
+      function focusSelectedForEdit() {
+        const el = nodeElements.get(selectedId);
+        if (!el) return;
+        const title = el.querySelector(".node-title");
+        if (title) {
+          title.focus();
+          document.getSelection()?.selectAllChildren(title);
+        }
       }
 
       function bindButtons() {
@@ -864,6 +1159,217 @@
         btnUndo.addEventListener("click", handleUndo);
         btnRedo.addEventListener("click", handleRedo);
         btnSave.addEventListener("click", handleSave);
+        btnExport.addEventListener("click", exportJSON);
+        fileImport.addEventListener("change", importJSON);
+        versionSelector.addEventListener("change", restoreVersion);
+        miniAddChild.addEventListener("click", () => addChildShortcut());
+        miniAddSibling.addEventListener("click", () => addSiblingShortcut());
+        miniDelete.addEventListener("click", () => deleteNode(selectedId));
+        minimapCanvas.parentElement.addEventListener("click", minimapNavigate);
+      }
+
+      function applyAlignment(x, y, currentId) {
+        const threshold = 12;
+        let snappedX = x;
+        let snappedY = y;
+        let guideX = null;
+        let guideY = null;
+        mapState.nodes.forEach((n) => {
+          if (n.id === currentId) return;
+          if (Math.abs(n.position.x - x) < threshold) {
+            snappedX = n.position.x;
+            guideX = snappedX;
+          }
+          if (Math.abs(n.position.y - y) < threshold) {
+            snappedY = n.position.y;
+            guideY = snappedY;
+          }
+        });
+        renderGuides(guideX, guideY);
+        return { snappedX, snappedY };
+      }
+
+      function renderGuides(x, y) {
+        guidesContainer.innerHTML = "";
+        if (x !== null) {
+          const v = document.createElement("div");
+          v.className = "guide-line vertical";
+          v.style.left = `${x}px`;
+          guidesContainer.appendChild(v);
+        }
+        if (y !== null) {
+          const h = document.createElement("div");
+          h.className = "guide-line horizontal";
+          h.style.top = `${y}px`;
+          guidesContainer.appendChild(h);
+        }
+      }
+
+      function clearGuides() {
+        guidesContainer.innerHTML = "";
+      }
+
+      function spreadSiblings(node) {
+        const siblings = mapState.nodes.filter((n) => n.parentId === node.parentId && n.id !== node.id);
+        siblings.forEach((sib) => {
+          const dx = sib.position.x - node.position.x;
+          const dy = sib.position.y - node.position.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 60) {
+            sib.position.x += dx * 0.2 + 30;
+            sib.position.y += dy * 0.2 + 30;
+          }
+        });
+        drawEdges();
+      }
+
+      function navigateNodes(key) {
+        if (!selectedId || !mapState.nodes.length) return;
+        const current = mapState.nodes.find((n) => n.id === selectedId);
+        if (!current) return;
+        const dirMap = {
+          ArrowUp: { x: 0, y: -1 },
+          ArrowDown: { x: 0, y: 1 },
+          ArrowLeft: { x: -1, y: 0 },
+          ArrowRight: { x: 1, y: 0 },
+        };
+        const dir = dirMap[key];
+        let best = null;
+        let bestScore = -Infinity;
+        mapState.nodes.forEach((n) => {
+          if (n.id === current.id) return;
+          const vx = n.position.x - current.position.x;
+          const vy = n.position.y - current.position.y;
+          const dot = vx * dir.x + vy * dir.y;
+          if (dot <= 0) return;
+          const dist = Math.sqrt(vx * vx + vy * vy);
+          const score = dot / (dist + 1e-6);
+          if (score > bestScore) {
+            bestScore = score;
+            best = n;
+          }
+        });
+        if (best) {
+          selectedId = best.id;
+          render();
+        }
+      }
+
+      function drawMinimap() {
+        const ctx = minimapCanvas.getContext("2d");
+        ctx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+        const nodes = mapState.nodes;
+        if (!nodes.length) return;
+        const xs = nodes.map((n) => n.position.x);
+        const ys = nodes.map((n) => n.position.y);
+        const minX = Math.min(...xs) - 80;
+        const maxX = Math.max(...xs) + 200;
+        const minY = Math.min(...ys) - 80;
+        const maxY = Math.max(...ys) + 80;
+        const mapW = maxX - minX;
+        const mapH = maxY - minY;
+        const scale = Math.min(
+          minimapCanvas.width / (mapW || 1),
+          minimapCanvas.height / (mapH || 1)
+        );
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+        nodes.forEach((n) => {
+          const x = (n.position.x - minX) * scale;
+          const y = (n.position.y - minY) * scale;
+          ctx.fillStyle = n.id === selectedId ? "rgba(79,139,255,0.9)" : "rgba(255,255,255,0.6)";
+          ctx.fillRect(x, y, 8, 8);
+        });
+        const viewW = viewport.clientWidth / panState.scale;
+        const viewH = viewport.clientHeight / panState.scale;
+        const viewX = (-panState.x - minX) * scale;
+        const viewY = (-panState.y - minY) * scale;
+        ctx.strokeStyle = "rgba(176,123,255,0.9)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(viewX, viewY, viewW * scale, viewH * scale);
+      }
+
+      function minimapNavigate(e) {
+        const rect = minimapCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const nodes = mapState.nodes;
+        if (!nodes.length) return;
+        const xs = nodes.map((n) => n.position.x);
+        const ys = nodes.map((n) => n.position.y);
+        const minX = Math.min(...xs) - 80;
+        const maxX = Math.max(...xs) + 200;
+        const minY = Math.min(...ys) - 80;
+        const maxY = Math.max(...ys) + 80;
+        const mapW = maxX - minX;
+        const mapH = maxY - minY;
+        const scale = Math.min(
+          minimapCanvas.width / (mapW || 1),
+          minimapCanvas.height / (mapH || 1)
+        );
+        const worldX = x / scale + minX;
+        const worldY = y / scale + minY;
+        panState.x = viewport.clientWidth / 2 - worldX * panState.scale;
+        panState.y = viewport.clientHeight / 2 - worldY * panState.scale;
+        drawEdges();
+      }
+
+      function showMiniToolbar(nodeEl) {
+        if (!nodeEl) {
+          miniToolbar.hidden = true;
+          return;
+        }
+        const rect = nodeEl.getBoundingClientRect();
+        const parentRect = viewport.getBoundingClientRect();
+        miniToolbar.style.left = `${rect.left - parentRect.left + rect.width / 2 - 70}px`;
+        miniToolbar.style.top = `${rect.top - parentRect.top - 40}px`;
+        miniToolbar.hidden = false;
+      }
+
+      function exportJSON() {
+        const dataStr = JSON.stringify(mapState, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `mapa-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function importJSON(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed.nodes || !parsed.rootId) throw new Error("Arquivo inválido");
+            pushHistory("importar JSON");
+            mapState = parsed;
+            selectedId = mapState.rootId;
+            render();
+            saveToServer();
+          } catch (err) {
+            showToast("Falha ao importar JSON");
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = "";
+      }
+
+      function restoreVersion(e) {
+        const idx = e.target.value;
+        if (idx === "") return;
+        const versions = JSON.parse(localStorage.getItem("mapVersions") || "[]");
+        const version = versions[Number(idx)];
+        if (version) {
+          pushHistory("restaurar versão");
+          mapState = version.data;
+          selectedId = mapState.rootId;
+          render();
+          saveToServer();
+        }
       }
 
       loadFromServer();
