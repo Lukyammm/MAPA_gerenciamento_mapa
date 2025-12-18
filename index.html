@@ -7,17 +7,15 @@
     
     <style>
       :root {
-        --canvas-bg: #f5f6f8;
-        --ink: #111111;
-        --muted: #4b5563;
-        --panel: #ffffff;
-        --panel-strong: #f8fafc;
-        --border: rgba(17, 17, 17, 0.06);
-        --accent: #4c6fff;
-        --edge: #b0b6c3;
-        --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.08);
-        --shadow-strong: 0 18px 46px rgba(0, 0, 0, 0.12);
-        --radius: 16px;
+        --bg: #f6f7fb;
+        --ink: #0f172a;
+        --muted: #5b6473;
+        --panel: rgba(255, 255, 255, 0.82);
+        --border: rgba(15, 23, 42, 0.08);
+        --primary: #1f4b99;
+        --accent: #3a6bdc;
+        --shadow-soft: 0 20px 60px rgba(15, 23, 42, 0.06);
+        --shadow-strong: 0 28px 80px rgba(15, 23, 42, 0.12);
       }
 
       * {
@@ -28,7 +26,8 @@
         margin: 0;
         font-family: "SF Pro Text", "Inter", system-ui, -apple-system,
           BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: var(--canvas-bg);
+        background: radial-gradient(circle at 20% 20%, #ffffff 0, #f6f7fb 60%),
+          linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
         color: var(--ink);
         min-height: 100vh;
         overflow: hidden;
@@ -38,27 +37,45 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
-        padding: 20px 24px 16px;
-        gap: 12px;
+        padding: 28px 32px 18px;
+        gap: 10px;
       }
 
       header {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 16px;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
         gap: 14px;
       }
 
-      .title-block h1 {
+      .badge {
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(31, 75, 153, 0.12);
+        font-size: 0.82rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--primary);
+        border: 1px solid rgba(31, 75, 153, 0.18);
+      }
+
+      .titles h1 {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         font-weight: 700;
         letter-spacing: -0.01em;
       }
 
-      .title-block small {
+      .titles p {
+        margin: 4px 0 0;
         color: var(--muted);
-        font-size: 0.9rem;
+        font-size: 0.95rem;
       }
 
       .mode-controls {
@@ -69,18 +86,16 @@
 
       .mode-indicator {
         padding: 8px 12px;
-        border-radius: 12px;
-        background: var(--panel);
+        border-radius: 10px;
+        background: rgba(15, 23, 42, 0.06);
         color: var(--ink);
         font-weight: 600;
         font-size: 0.92rem;
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow-soft);
       }
 
       .ghost-button {
-        border: 1px solid var(--border);
-        background: var(--panel);
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: #ffffff;
         color: var(--ink);
         border-radius: 12px;
         padding: 10px 14px;
@@ -90,7 +105,7 @@
         box-shadow: var(--shadow-soft);
       }
 
-      .ghost-button:hover:not(:disabled) {
+      .ghost-button:hover {
         transform: translateY(-1px);
         box-shadow: var(--shadow-strong);
       }
@@ -104,65 +119,63 @@
       .toolbar {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 12px;
-        background: rgba(26, 29, 36, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 14px;
-        box-shadow: var(--shadow-strong);
-        position: fixed;
-        top: 18px;
-        left: 50%;
-        transform: translate(-50%, -10px);
+        gap: 10px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow-soft);
+        position: sticky;
+        top: 0;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 160ms ease, transform 160ms ease;
+        transform: translateY(-6px);
+        transition: opacity 180ms ease, transform 180ms ease;
         flex-wrap: wrap;
-        backdrop-filter: blur(8px);
       }
 
-      .toolbar.visible {
+      body.edit-mode .toolbar {
         opacity: 1;
         pointer-events: auto;
-        transform: translate(-50%, 0);
+        transform: translateY(0);
       }
 
       .toolbar button,
       .toolbar .file-label,
       .toolbar select,
       .toolbar .status {
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(255, 255, 255, 0.04);
-        color: #e6e6e6;
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 0.9rem;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 0.92rem;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        transition: border-color 0.18s ease, box-shadow 0.2s ease,
-          background 0.2s ease;
+        gap: 8px;
+        transition: border-color 0.18s ease, box-shadow 0.2s ease;
+        box-shadow: none;
       }
 
       .toolbar button:hover,
       .toolbar .file-label:hover,
       .toolbar select:hover {
-        border-color: rgba(76, 111, 255, 0.5);
-        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(31, 75, 153, 0.35);
+        box-shadow: var(--shadow-soft);
       }
 
       .toolbar button:disabled {
-        opacity: 0.35;
+        opacity: 0.45;
         cursor: not-allowed;
         box-shadow: none;
       }
 
       .toolbar select {
         appearance: none;
-        padding-right: 22px;
-        background-image: linear-gradient(45deg, transparent 50%, #e6e6e6 50%),
-          linear-gradient(135deg, #e6e6e6 50%, transparent 50%);
+        padding-right: 28px;
+        background-image: linear-gradient(45deg, transparent 50%, #1f4b99 50%),
+          linear-gradient(135deg, #1f4b99 50%, transparent 50%);
         background-position: calc(100% - 16px) calc(50% - 4px),
           calc(100% - 10px) calc(50% - 4px);
         background-size: 6px 6px, 6px 6px;
@@ -197,7 +210,7 @@
         right: 0;
         top: 0;
         height: 3px;
-        background: linear-gradient(90deg, rgba(76, 111, 255, 0.3), transparent);
+        background: linear-gradient(90deg, rgba(31, 75, 153, 0.28), transparent);
         transform-origin: left;
         scale: 0;
         transition: scale 0.25s ease;
@@ -220,10 +233,11 @@
       .viewport {
         position: relative;
         flex: 1;
-        margin: 8px 0 8px;
-        border-radius: 18px;
+        margin: 6px 0 8px;
+        border-radius: 20px;
         overflow: hidden;
-        background: transparent;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%,
+            rgba(244, 245, 248, 0.95) 100%);
         border: 1px solid var(--border);
         box-shadow: var(--shadow-soft);
       }
@@ -246,7 +260,6 @@
         inset: 0;
         overflow: hidden;
         cursor: grab;
-        background: var(--canvas-bg);
       }
 
       body:not(.edit-mode) .map-wrapper {
@@ -269,10 +282,10 @@
       .node {
         position: absolute;
         min-width: 200px;
-        max-width: 340px;
+        max-width: 320px;
         background: var(--panel);
-        border: 1px solid rgba(17, 17, 17, 0.04);
-        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        border-radius: 18px;
         padding: 14px 16px 12px;
         box-shadow: var(--shadow-soft);
         color: var(--ink);
@@ -280,16 +293,16 @@
         flex-direction: column;
         gap: 8px;
         cursor: grab;
-        transition: transform 0.14s ease, box-shadow 0.14s ease,
-          border-color 0.18s ease, background 0.18s ease;
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          border-color 0.2s ease, background 0.2s ease;
       }
 
       .node:focus-within,
       .node.selected {
-        border-color: rgba(76, 111, 255, 0.6);
+        border-color: rgba(31, 75, 153, 0.35);
         box-shadow: var(--shadow-strong);
         transform: translateY(-1px);
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.94);
       }
 
       .node.dragging {
@@ -298,14 +311,14 @@
       }
 
       .node-title {
-        font-size: 1.05rem;
-        font-weight: 600;
+        font-size: 1.1rem;
+        font-weight: 700;
         outline: none;
         letter-spacing: -0.01em;
       }
 
       .node-meta {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         color: var(--muted);
         display: flex;
         align-items: center;
@@ -329,8 +342,8 @@
         padding: 4px 8px;
         border-radius: 999px;
         font-size: 0.78rem;
-        background: rgba(76, 111, 255, 0.12);
-        border: 1px solid rgba(76, 111, 255, 0.16);
+        background: rgba(31, 75, 153, 0.08);
+        border: 1px solid rgba(31, 75, 153, 0.12);
         color: var(--ink);
       }
 
@@ -342,20 +355,59 @@
 
       .chip-button {
         border: 1px solid var(--border);
-        background: rgba(15, 23, 42, 0.02);
+        background: rgba(15, 23, 42, 0.03);
         color: var(--ink);
         border-radius: 10px;
         padding: 6px 10px;
         font-size: 0.85rem;
         cursor: pointer;
-        transition: opacity 0.15s ease, border-color 0.2s ease,
-          background 0.2s ease;
+        transition: opacity 0.15s ease, border-color 0.2s ease;
       }
 
       .chip-button:hover {
-        border-color: rgba(76, 111, 255, 0.4);
+        border-color: rgba(31, 75, 153, 0.3);
         opacity: 1;
-        background: rgba(76, 111, 255, 0.08);
+      }
+
+      .collapsed-hint {
+        font-size: 0.82rem;
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        padding: 6px 8px;
+      }
+
+      .floating-card {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow-soft);
+        display: grid;
+        gap: 6px;
+        min-width: 240px;
+        color: var(--ink);
+      }
+
+      .floating-card h3 {
+        margin: 0;
+        font-size: 0.98rem;
+      }
+
+      .floating-card small {
+        color: var(--muted);
+      }
+
+      .key-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--muted);
       }
 
       .toast {
@@ -401,7 +453,7 @@
 
       .guide-line {
         position: absolute;
-        background: rgba(76, 111, 255, 0.32);
+        background: rgba(31, 75, 153, 0.28);
         pointer-events: none;
       }
 
@@ -497,29 +549,32 @@
 
   </head>
   <body>
-    <div class="app" aria-label="Mapa" role="application">
+    <div class="app" aria-label="Mapa mental" role="application">
       <header>
-        <div class="title-block">
-          <h1>Salas conectadas</h1>
-          <small>Canvas controlado e limpo</small>
+        <div class="header-left">
+          <span class="badge" aria-hidden="true">Mapa Mental</span>
+          <div class="titles">
+            <h1>Mapa silencioso das ideias</h1>
+            <p>Canvas leve com foco absoluto no conteúdo e na leitura.</p>
+          </div>
         </div>
         <div class="mode-controls">
-          <div class="mode-indicator" id="modeIndicator">Explorar</div>
-          <button id="modeToggle" class="ghost-button">Editar</button>
+          <div class="mode-indicator" id="modeIndicator">Modo: Explorar</div>
+          <button id="modeToggle" class="ghost-button">Entrar em edição</button>
         </div>
       </header>
 
       <div class="toolbar" id="toolbar" aria-label="Ferramentas de edição">
-        <button id="btnAddChild" aria-label="Adicionar filho">＋ Filho</button>
-        <button id="btnAddSibling" aria-label="Adicionar irmão">＋ Irmão</button>
-        <button id="btnDelete" aria-label="Remover nó selecionado">✕ Remover</button>
-        <button id="btnOrganize" aria-label="Organizar">⤷ Organizar</button>
-        <button id="btnCollapse" aria-label="Expandir ou colapsar">⤵︎ Alternar</button>
-        <button id="btnUndo" aria-label="Desfazer">↩︎ Desfazer</button>
-        <button id="btnRedo" aria-label="Refazer">↪︎ Refazer</button>
-        <button id="btnSave" aria-label="Salvar manual">⧉ Salvar</button>
-        <button id="btnExport" aria-label="Exportar JSON">⬇︎ Exportar</button>
-        <label class="file-label" for="fileImport">⬆︎ Importar</label>
+        <button id="btnAddChild" aria-label="Adicionar filho">➕ Filho (Shift+Enter)</button>
+        <button id="btnAddSibling" aria-label="Adicionar irmão">➕ Irmão</button>
+        <button id="btnDelete" aria-label="Remover nó selecionado">🗑️ Remover (Del)</button>
+        <button id="btnOrganize" aria-label="Auto organizar">🧭 Auto-organizar</button>
+        <button id="btnCollapse" aria-label="Expandir ou colapsar">⤵️ Expandir/Colapsar</button>
+        <button id="btnUndo" aria-label="Desfazer">↩️ Undo</button>
+        <button id="btnRedo" aria-label="Refazer">↪️ Redo</button>
+        <button id="btnSave" aria-label="Salvar manual">💾 Salvar (Ctrl/Cmd+S)</button>
+        <button id="btnExport" aria-label="Exportar JSON">⬇️ Exportar</button>
+        <label class="file-label" for="fileImport">⬆️ Importar</label>
         <input id="fileImport" type="file" accept="application/json" style="display:none" />
         <select id="versionSelector" aria-label="Versões salvas"></select>
         <span class="status" id="syncStatus" role="status" aria-live="polite">
@@ -537,6 +592,17 @@
         <div class="map-wrapper" id="mapWrapper" aria-label="Área do mapa">
           <svg class="edges" id="edgeLayer" xmlns="http://www.w3.org/2000/svg"></svg>
           <div class="map-inner" id="mapInner" aria-live="polite"></div>
+        </div>
+        <div class="floating-card" aria-label="Ajuda e histórico">
+          <h3>Atalhos</h3>
+          <div class="key-row"><span>Setas</span><span>Navegar entre nós</span></div>
+          <div class="key-row"><span>Enter</span><span>Editar nó</span></div>
+          <div class="key-row"><span>Shift + Enter</span><span>Novo filho</span></div>
+          <div class="key-row"><span>Delete</span><span>Remover nó</span></div>
+          <div class="key-row"><span>Ctrl/Cmd + S</span><span>Salvar</span></div>
+          <div class="key-row"><span>Ctrl/Cmd + Z / Y</span><span>Undo/Redo</span></div>
+          <small>Arraste fundo para mover, scroll com foco no cursor para zoom.</small>
+          <div class="history" id="historyList"></div>
         </div>
         <div class="minimap" aria-label="Minimapa" title="Clique para reposicionar" role="button">
           <canvas id="minimapCanvas" width="220" height="150"></canvas>
@@ -587,36 +653,6 @@
       const MAX_TITLE = 80;
       const MAX_DESCRIPTION = 200;
 
-      const UI_CONFIG = {
-        canvas: {
-          background: "#f5f6f8",
-          gridOpacity: 0,
-          guide: "rgba(76, 111, 255, 0.35)",
-        },
-        nodes: {
-          background: "#ffffff",
-          highlight: "#4c6fff",
-          text: "#111111",
-          muted: "#4b5563",
-          radius: 16,
-          shadow: "0 14px 40px rgba(0,0,0,0.08)",
-          shadowActive: "0 18px 46px rgba(0,0,0,0.12)",
-        },
-        edges: {
-          color: "#b0b6c3",
-          width: 1.6,
-          inactiveOpacity: 0.25,
-          activeOpacity: 0.9,
-        },
-        toolbar: {
-          requireSelection: true,
-        },
-        interactions: {
-          snap: 12,
-          miniToolbar: true,
-        },
-      };
-
       let mapState = { nodes: [], rootId: null };
       let nodeElements = new Map();
       let selectedId = null;
@@ -632,19 +668,6 @@
       let savePending = false;
       let saveTimer = null;
       let saveInFlight = false;
-
-      function applyVisualConfig() {
-        const root = document.documentElement;
-        root.style.setProperty("--canvas-bg", UI_CONFIG.canvas.background);
-        root.style.setProperty("--panel", UI_CONFIG.nodes.background);
-        root.style.setProperty("--ink", UI_CONFIG.nodes.text);
-        root.style.setProperty("--muted", UI_CONFIG.nodes.muted);
-        root.style.setProperty("--accent", UI_CONFIG.nodes.highlight);
-        root.style.setProperty("--edge", UI_CONFIG.edges.color);
-        root.style.setProperty("--radius", `${UI_CONFIG.nodes.radius}px`);
-        root.style.setProperty("--shadow-soft", UI_CONFIG.nodes.shadow);
-        root.style.setProperty("--shadow-strong", UI_CONFIG.nodes.shadowActive);
-      }
 
       function defaultMap() {
         const rootId = crypto.randomUUID();
@@ -691,7 +714,7 @@
               id: rootId,
               parentId: null,
               title: "Hospital Estadual",
-              description: "Rede das salas ativas",
+              description: "Mapa mental das salas cadastradas",
               tags: ["hospital", "dashboard"],
               collapsed: false,
               position: { x: 0, y: 0 },
@@ -728,29 +751,24 @@
         saveBar.classList.toggle("active", saving);
         saveProgressBar.parentElement.classList.toggle("active", saving);
         if (saving) {
-          dot.style.boxShadow = "0 0 0 6px rgba(76,111,255,0.2)";
-          label.textContent = "Salvando";
+          dot.style.boxShadow = "0 0 0 6px rgba(79,139,255,0.15)";
+          label.textContent = "Salvando...";
         } else if (unsaved) {
-          dot.style.boxShadow = "0 0 0 6px rgba(245,158,11,0.2)";
-          label.textContent = "Pendente";
+          dot.style.boxShadow = "0 0 0 6px rgba(248,184,74,0.15)";
+          label.textContent = "Alterações pendentes";
         } else {
-          dot.style.boxShadow = "0 0 0 6px rgba(34,197,94,0.2)";
+          dot.style.boxShadow = "0 0 0 6px rgba(50,213,131,0.15)";
           label.textContent = "Sincronizado";
         }
-      }
-
-      function updateToolbarVisibility() {
-        const show =
-          editMode &&
-          (!UI_CONFIG.toolbar.requireSelection || Boolean(selectedId));
-        toolbar.classList.toggle("visible", show);
       }
 
       function setMode(isEdit) {
         editMode = isEdit;
         document.body.classList.toggle("edit-mode", editMode);
-        modeIndicator.textContent = editMode ? "Editar" : "Explorar";
-        modeToggle.textContent = editMode ? "Explorar" : "Editar";
+        modeIndicator.textContent = editMode ? "Modo: Editar" : "Modo: Explorar";
+        modeToggle.textContent = editMode
+          ? "Voltar a explorar"
+          : "Entrar em edição";
 
         [
           btnAddChild,
@@ -774,7 +792,6 @@
           miniToolbar.hidden = true;
         }
 
-        updateToolbarVisibility();
         render();
       }
 
@@ -794,7 +811,6 @@
       }
 
       function renderHistory() {
-        if (!historyList) return;
         historyList.innerHTML = historyLog
           .map((item) => `<span>${item}</span>`)
           .join("");
@@ -805,14 +821,12 @@
           google.script.run
             .withSuccessHandler((data) => {
               mapState = data && data.nodes ? data : defaultMap();
-              selectedId = mapState.rootId;
               render();
               setStatus(false, false);
               loadVersions();
             })
             .withFailureHandler(() => {
               mapState = defaultMap();
-              selectedId = mapState.rootId;
               render();
               setStatus(false, false);
               loadVersions();
@@ -820,7 +834,6 @@
             .getMap();
         } else {
           mapState = defaultMap();
-          selectedId = mapState.rootId;
           render();
           setStatus(false, false);
           loadVersions();
@@ -927,7 +940,7 @@
           title.setAttribute("role", "textbox");
           title.setAttribute("aria-label", "Título do nó");
           title.addEventListener("input", () => {
-            node.title = validateText(title.textContent, MAX_TITLE, "Sem nome");
+            node.title = validateText(title.textContent, MAX_TITLE, "(sem nome)");
             setStatus(true, true);
             saveToServer();
           });
@@ -1028,7 +1041,6 @@
           mapInner.appendChild(el);
         });
 
-        updateToolbarVisibility();
         drawEdges();
         if (editMode) {
           showMiniToolbar(nodeElements.get(selectedId));
@@ -1062,20 +1074,10 @@
           const end = { x: node.position.x, y: node.position.y + nodeHeight / 2 };
           const dx = (end.x - start.x) / 2;
           const d = `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
-          const active =
-            selectedId &&
-            (node.id === selectedId || node.parentId === selectedId || parent.id === selectedId);
           path.setAttribute("d", d);
           path.setAttribute("fill", "none");
-          path.setAttribute("stroke", UI_CONFIG.edges.color);
-          path.setAttribute(
-            "stroke-width",
-            active ? UI_CONFIG.edges.width * 1.25 : UI_CONFIG.edges.width
-          );
-          path.setAttribute(
-            "opacity",
-            active ? UI_CONFIG.edges.activeOpacity : UI_CONFIG.edges.inactiveOpacity
-          );
+          path.setAttribute("stroke", "rgba(108, 122, 145, 0.38)");
+          path.setAttribute("stroke-width", "3");
           path.setAttribute("stroke-linecap", "round");
           edgeLayer.appendChild(path);
         });
@@ -1087,19 +1089,19 @@
         edgeLayer.style.transform = mapInner.style.transform;
       }
 
-      function addNode(parentId, label = "novo item") {
+      function addNode(parentId, label = "novo nó") {
         if (!requireEdit("criar nós")) return;
         if (!parentId) parentId = mapState.rootId;
         pushHistory(label);
         const newNode = {
           id: crypto.randomUUID(),
           parentId,
-          title: "Item",
-          description: "Detalhe",
+          title: "Novo nó",
+          description: "Descrição",
           tags: [],
           collapsed: false,
           position: { x: Math.random() * 160 + 80, y: Math.random() * 120 - 60 },
-          color: UI_CONFIG.nodes.highlight,
+          color: "#4f8bff",
         };
         mapState.nodes.push(newNode);
         selectedId = newNode.id;
@@ -1308,7 +1310,7 @@
       }
 
       function applyAlignment(x, y, currentId) {
-        const threshold = UI_CONFIG.interactions.snap;
+        const threshold = 12;
         let snappedX = x;
         let snappedY = y;
         let guideX = null;
@@ -1416,17 +1418,14 @@
         nodes.forEach((n) => {
           const x = (n.position.x - minX) * scale;
           const y = (n.position.y - minY) * scale;
-          ctx.fillStyle =
-            n.id === selectedId
-              ? "rgba(76,111,255,0.9)"
-              : "rgba(255,255,255,0.6)";
+          ctx.fillStyle = n.id === selectedId ? "rgba(79,139,255,0.9)" : "rgba(255,255,255,0.6)";
           ctx.fillRect(x, y, 8, 8);
         });
         const viewW = viewport.clientWidth / panState.scale;
         const viewH = viewport.clientHeight / panState.scale;
         const viewX = (-panState.x - minX) * scale;
         const viewY = (-panState.y - minY) * scale;
-        ctx.strokeStyle = "rgba(76,111,255,0.8)";
+        ctx.strokeStyle = "rgba(176,123,255,0.9)";
         ctx.lineWidth = 2;
         ctx.strokeRect(viewX, viewY, viewW * scale, viewH * scale);
       }
@@ -1457,7 +1456,7 @@
       }
 
       function showMiniToolbar(nodeEl) {
-        if (!editMode || !nodeEl || !UI_CONFIG.interactions.miniToolbar) {
+        if (!editMode || !nodeEl) {
           miniToolbar.hidden = true;
           return;
         }
@@ -1514,7 +1513,6 @@
         }
       }
 
-      applyVisualConfig();
       setMode(false);
       loadFromServer();
       setupPanZoom();
