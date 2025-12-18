@@ -70,7 +70,7 @@ function defaultMapData() {
         id: rootId,
         parentId: null,
         title: 'Hospital Estadual',
-        description: 'Mapa mental das salas cadastradas',
+        description: 'Rede das salas ativas',
         tags: ['hospital', 'dashboard'],
         collapsed: false,
         position: { x: 0, y: 0 },
