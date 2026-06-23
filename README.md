@@ -1,6 +1,6 @@
-# Room Map Management
+# Room Map Management Editor
 
-Repository: `MAPA_gerenciamento_mapa`
+Repository: `room-map-management-editor`
 
 ## Overview
 
